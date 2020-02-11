@@ -5,12 +5,12 @@
 
 TEST_CASE("initial ranking") {
     graph g = graph_builder()
-                .add_edge(0, 2).add_edge(0, 4)
-                .add_edge(1, 2).add_edge(1, 4).add_edge(1, 3)
-                .add_edge(2, 5)
-                .add_edge(3, 4).add_edge(3, 5).add_edge(3, 6)
+                .add_edge(0, 5).add_edge(0, 4)
+                .add_edge(1, 5).add_edge(1, 4).add_edge(1, 3)
+                .add_edge(5, 2)
+                .add_edge(3, 4).add_edge(3, 2).add_edge(3, 6)
                 .add_edge(4, 6)
-                .add_edge(5, 6)
+                .add_edge(2, 6)
                 .build();
 
     auto ranking = initialize_ranking(g);
@@ -66,4 +66,51 @@ TEST_CASE("basic tree") {
     REQUIRE( check_node(tree, 7, -1, {}) );
     REQUIRE( check_node(tree, 8, -1, {}) );
     REQUIRE( check_node(tree, 9, -1, {}) );
+}
+
+bool check_tree(std::vector<bool>& reachable, tight_tree& tree, std::vector<int>& ranking, vertex_t current, int parent) {
+    reachable[current] = true;
+    if (tree.node(current).parent != parent) {
+        return false;
+    }
+
+    for (auto u : tree.node(current).children) {
+        if (std::abs(edge_span(ranking, {current, u})) != 1) {
+            return false;
+        }
+        if (!check_tree(reachable, tree, ranking, u, current)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+TEST_CASE("initializing the spanning tree") {
+    graph g = graph_builder()
+                .add_edge(0, 11).add_edge(0, 6).add_edge(0, 4)
+                .add_edge(1, 2).add_edge(1, 5)
+                .add_edge(2, 5)
+                .add_edge(3, 8).add_edge(3, 6)
+                .add_edge(4, 9).add_edge(4, 10).add_edge(4, 7)
+                .add_edge(5, 8)
+                .add_edge(6, 9)
+                .add_edge(7, 10)
+                .add_edge(11, 1)
+                .build();
+    
+    std::vector<int> ranking = initialize_ranking(g);
+    tight_tree tree = initialize_tree(g, ranking);
+
+    for (vertex_t u = 0; u < g.size(); ++u) {
+        for (auto v : g.out_edges(u)) {
+            REQUIRE( ranking[v] > ranking[u] );
+        }
+    }
+
+    std::vector<bool> reachable(g.size(), false);
+    REQUIRE( check_tree(reachable, tree, ranking, tree.root, -1) );
+
+    for (vertex_t u = 0; u < g.size(); ++u) {
+        REQUIRE( reachable[u] );
+    }
 }
