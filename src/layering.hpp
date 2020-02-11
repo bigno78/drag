@@ -39,6 +39,19 @@ struct tight_tree {
     void remove_child(vertex_t parent, vertex_t child) {
 
     }
+
+    friend std::ostream& operator<<(std::ostream& out, tight_tree tree) {
+        for (auto n : tree.nodes) {
+            out << n.u << "(" << n.parent << "): {";
+            const char* sep = "";
+            for (auto u : n.children) {
+                out << sep << u;
+                sep = ",";
+            }
+            std::cout << "}\n";
+        }
+        return out;
+    }
 };
 
 
@@ -99,12 +112,12 @@ int span(std::vector<int> ranking, edge e) {
  * 
  */
 int basic_tree(const graph& g, const std::vector<int>& ranking, std::vector<bool>& done, tight_tree& tree, vertex_t root) {
-    int added = 0;
+    done[root] = true;
+    int added = 1;
     for (auto u : g.edges(root)) {
         if ( !done[u] && std::abs(span(ranking, { root, u })) == 1 ) {
             tree.add_child(root, u);
-            done[u] = true;
-            added += 1 + basic_tree(g, ranking, done, tree, u);
+            added += basic_tree(g, ranking, done, tree, u);
         }
     }
     return added;
