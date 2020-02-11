@@ -152,3 +152,19 @@ TEST_CASE("removing edges") {
         REQUIRE_FALSE(is_edge(g, 1, 1));
     }
 }
+
+TEST_CASE("iteration through out edges") {
+    graph g = graph_builder()
+                .add_edge(0, 2)
+                .add_edge(0, 4)
+                .add_edge(1, 5)
+                .build();
+
+    std::vector<vertex_t> vertices = { 2, 4 };
+
+    int i = 0;
+    for (auto v : g.out_edges(0)) {
+        REQUIRE(v == vertices[i++]);
+    }
+    REQUIRE(i == vertices.size());
+}

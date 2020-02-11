@@ -89,6 +89,7 @@ public:
             }
             out << "}\n";
         }
+        return out;
     }
 
     struct give_me_end_iterator {};
@@ -134,7 +135,10 @@ public:
         bool operator!=(const iterator& rhs) const { return !(*this == rhs); }
         vertex_t operator*() const { return curr; }
         iterator& operator++() {
-            while (curr < g.size() && !static_cast<Son&>(*this).is_edge(u, ++curr)) {}
+            if (curr == g.size()) {
+                return *this;
+            }
+            while (++curr < g.size() && !static_cast<Son&>(*this).is_edge(u, curr)) {}
             return *this;
         }
     };
