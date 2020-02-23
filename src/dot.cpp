@@ -1,7 +1,6 @@
 #include <iostream>
 
-#include "graph.hpp"
-#include "layering.hpp"
+#include "interface.hpp"
 
 template<typename Son>
 struct base {
@@ -15,20 +14,13 @@ struct derived : base<derived> {
 };
 
 int main() {
-    graph g = graph_builder()
-                .add_edge(0, 2).add_edge(0, 4)
-                .add_edge(1, 2).add_edge(1, 4).add_edge(1, 3)
-                .add_edge(2, 5)
-                .add_edge(3, 4).add_edge(3, 5).add_edge(3, 6)
-                .add_edge(4, 6)
-                .add_edge(5, 6)
-                .build();
-
-    auto ranking = initialize_ranking(g);
-
-    for (vertex_t u = 0; u < g.size(); ++u) {
-        std::cout << u << ": " << ranking[u] << "\n";
-    }
-
-    auto tree = initialize_tree(g, ranking);
+    graph g;
+    g.add_node();
+    g.add_node();
+    g.add_node();
+    g.add_node();
+    g.add_node();
+    g.add_edge(1, 2);
+    g.add_edge(3, 4);
+    g();
 }
