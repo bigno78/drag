@@ -9,6 +9,7 @@
  */
 struct cycle_removal {
     virtual void run(subgraph& g) = 0;
+    virtual ~cycle_removal() = default;
 };
 
 /**

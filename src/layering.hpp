@@ -6,6 +6,12 @@
 #include "subgraph.hpp"
 
 
+struct layering {
+    virtual std::vector< std::vector<vertex_t> > run() = 0;
+    virtual ~layering() = default;
+};
+
+
 template <typename T> 
 int sgn(T val) {
     return (T(0) < val) - (val < T(0));
@@ -58,15 +64,16 @@ struct tight_tree {
 };
 
 
-class layering {
-    std::vector<int> m_ranking;
-    tight_tree m_tree;
+class network_simplex_layering : public layering {
+    std::vector<int> ranking;
+    tight_tree tree;
 
 public:
-    std::vector<std::vector<int>> operator()(subgraph& g) {
+    std::vector< std::vector<vertex_t> > run() override {
 
     }
 
+private:
     /**
      * Assignes each vertex a layer, such that each edge goes from a lower layer to higher one
      * and the source vertices are at the lowest layer.
@@ -89,10 +96,10 @@ public:
         while (processed < g.size()) {
             to_rank.clear();
             for (vertex_t u = 0; u < g.size(); ++u) {
-                if (m_ranking[u] == -1) {
+                if (ranking[u] == -1) {
                     // check if there are any edges going to unranked vertices
                     for (auto v : g.out_edges(u)) {
-                        if (m_ranking[v] == -1) {
+                        if (ranking[v] == -1) {
                             goto fail;
                         }
                     }
@@ -102,7 +109,7 @@ public:
     fail: ;
             }
             for (auto u : to_rank) {
-                m_ranking[u] = curr;
+                ranking[u] = curr;
             }
             --curr;
         }
@@ -117,7 +124,7 @@ public:
      * @return        span of the edge
      */
     int edge_span(edge e) {
-        return m_ranking[e.head] - m_ranking[e.tail];
+        return ranking[e.head] - ranking[e.tail];
     }
 
     /**
@@ -130,7 +137,7 @@ public:
         int added = 1;
         for (auto u : g.edges(root)) {
             if ( !done[u] && std::abs(edge_span({ root, u })) == 1 ) {
-                m_tree.add_child(root, u);
+                tree.add_child(root, u);
                 added += basic_tree(g, done, u);
             }
         }
@@ -146,11 +153,11 @@ public:
      * @return the spanning tree
      */
     void initialize_tree(const subgraph& g) {
-        m_tree =  tight_tree(g.size());
-        m_tree.root = 0;
+        tree =  tight_tree(g.size());
+        tree.root = 0;
         std::vector<bool> done(g.size(), false);
 
-        int finished = basic_tree(g, done, m_tree.root);
+        int finished = basic_tree(g, done, tree.root);
 
         while(finished < g.size()) {
             // in the underlying undirected graph find the shortest edge (u, v) 
@@ -173,10 +180,10 @@ public:
             span -= sgn(span);
             for (vertex_t u = 0; u < g.size(); ++u) {
                 if (done[u]) {
-                    m_ranking[u] += span;
+                    ranking[u] += span;
                 }
             }
-            m_tree.add_child(e.tail, e.head);
+            tree.add_child(e.tail, e.head);
             done[e.head] = true;
             ++finished;
         }
