@@ -4,11 +4,20 @@
 
 #include "subgraph.hpp"
 
+namespace detail {
+
 /** 
  * Interface for a cycle removal algorithm.
  */
 struct cycle_removal {
-    virtual void run(subgraph& g) = 0;
+
+    /**
+     * Modifies the input graph by reversing certain edges to remove cycles.
+     * 
+     * @return the reversed edges in their new direction
+     */
+    virtual std::vector<edge> run(subgraph& g) = 0;
+
     virtual ~cycle_removal() = default;
 };
 
@@ -16,36 +25,37 @@ struct cycle_removal {
  * Algorithm for removing cycles in a graph using a depth first search.
  */
 class dfs_removal : public cycle_removal {
-    /**
-     * Marks for each verter of the graph:
-     * 0  undiscovered vertex
-     * -1 vertex which is being processed ("is on the stack")
-     * 1 finished vertex
-     */
-    std::vector<int8_t> marks;
-
+    
 public:
-    void run(subgraph& g) override {
-        marks.resize(g.size(), 0);
-        for (vertex_t u = 0; u < g.size(); ++u) {
+    std::vector<edge> run(subgraph& g) override {
+        // Marks for each vertex of the graph:
+        //   0  undiscovered vertex
+        //  -1 vertex which is being processed ("is on the stack")
+        //   1 finished vertex
+        vertex_flags<int8_t> marks(g, 0);
+        std::vector<edge> reversed_edges;
+        for (auto u : g.vertices()) {
             if (marks[u] == 0) {
-                dfs(g, u);
+                dfs(g, marks, u, reversed_edges);
             }
         }
-        marks.clear();
+        return reversed_edges;
     }
 
 private:
-    void dfs(subgraph& g, vertex_t u) {
+    void dfs(subgraph& g, vertex_flags<int8_t>& marks, vertex_t u, std::vector<edge>& reversed_edges) {
         marks[u] = -1;
-        for (auto v : g.out_edges(u)) {
+        for (auto v : g.out_neighbours(u)) {
             if (marks[v] == -1) { // there is a cycle
+                reversed_edges.push_back({ v, u });
                 g.remove_edge(u, v);
                 g.add_edge(v, u);
             } else if (marks[v] == 0) {
-                dfs(g, v);
+                dfs(g, marks, v, reversed_edges);
             }
         }
         marks[u] = 1;
     }
 };
+
+} //namespace detail

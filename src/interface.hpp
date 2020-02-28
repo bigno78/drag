@@ -2,46 +2,88 @@
 
 #include <vector>
 #include <iostream>
+#include <algorithm>
 
 #include "stuff.hpp"
-#include "subgraph.hpp"
+
+/**
+ * graph g;
+ * g.add_node();
+ * ...
+ * g.add_node();
+ * g.add_edge();
+ * ...
+ * g.add_edge();
+ * 
+ * g.build();
+ * for (auto u : g.nodes()) {
+ *     draw the node;
+ * }
+ * for (auto e : g.edges()) {
+ *     draw the edge;
+ * }
+ * 
+ * ---------------- g.build() --------------------------
+ * layout_engine.build();
+ * 
+ * ------------- layout_engine.build() -------------------
+ * split_into_subgraphs(g);
+ * for ( auto g : subgraphs ) {
+ *     layout = process_subgraph();
+ * }
+ * 
+ * ------------- process_subgraph() ---------------------
+ * reverse_edges();
+ * hierarchy = layer();
+ * paths = split_long_edges();
+ * minimize_crossing( hierarchy );
+ * node_positions = position_nodes( hierarchy );
+ * return layout { paths, node_positions };
+ */
 
 class graph {
     std::vector< std::vector<vertex_t> > m_out_neighbours;
     std::vector< std::vector<vertex_t> > m_in_neighbours;
-    std::vector< node > m_nodes;
-    std::vector< int > m_components;
-    std::vector< subgraph > m_subgraphs;
-    std::vector< vertex_t > m_mapping;
-    int m_component_count;
+    std::vector< node > m_node_size;
 
-    float default_width, default_height;
+    float default_radius;
 
 public:
-    vertex_t add_node() { return add_node(default_width, default_height); }
-    vertex_t add_node(unsigned radius) { return add_node(radius, radius); }
-    vertex_t add_node(unsigned width, unsigned haight) {
+    vertex_t add_node() { return add_node(default_radius); }
+    vertex_t add_node(unsigned radius) {
         m_out_neighbours.emplace_back();
         m_in_neighbours.emplace_back();
-        m_nodes.push_back( { default_width, default_height } );
-        return m_nodes.size() - 1;
+        m_node_size.push_back( { radius } );
+        return m_node_size.size() - 1;
     }
+
     void add_edge(vertex_t tail, vertex_t head) { 
         m_out_neighbours[tail].push_back(head);
         m_in_neighbours[head].push_back(tail); 
     }
 
-    void operator()() {
-        split_components();
-        init_subgraphs();
-        for (auto& g : m_subgraphs) {
-            std::cout << g << "\n\n";
+    void remove_edge(vertex_t tail, vertex_t head) {
+        remove_neighour(m_out_neighbours[tail], head);
+        remove_neighour(m_in_neighbours[head], tail);
+    }
+
+
+    unsigned size() const { return m_node_size.size(); }
+
+    const std::vector<vertex_t>& out_neighbours(vertex_t u) const { return m_out_neighbours[u]; }
+    const std::vector<vertex_t>& in_neighbours(vertex_t u) const { return m_in_neighbours[u]; }
+
+//  const std::vector<vertex_t>& vertices() const { .... }
+
+private:
+    void remove_neighour(std::vector<vertex_t>& neighbours, vertex_t u) {
+        auto it = std::find(neighbours.begin(), neighbours.end(), u);
+        if (it != neighbours.end()) {
+            neighbours.erase(it);
         }
     }
 
-    unsigned size() const { return m_nodes.size(); }
 
-private:
     void split_components() {
         m_components.resize(size(), -1);
 
