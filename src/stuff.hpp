@@ -21,3 +21,22 @@ inline std::ostream& operator<<(std::ostream& out, edge e) {
     out << "(" << e.tail << ", " << e.head << ")";
     return out;
 }
+
+struct range {
+    vertex_t end;
+
+    range(vertex_t end) : end(end) {}
+
+    struct iterator {
+        vertex_t val = 0;
+        iterator(vertex_t val) : val(val) {}
+
+        vertex_t operator*() { return val; }
+        friend bool operator==(const iterator& lhs, const iterator& rhs) { lhs.val == rhs.val; }
+        friend bool operator!=(const iterator& lhs, const iterator& rhs) { !(lhs == rhs); }
+        iterator& operator++() { val++; return *this; }
+    };
+    
+    iterator begin() { return iterator(0); }
+    iterator end() { return iterator(end); }
+};
