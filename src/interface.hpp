@@ -50,7 +50,7 @@ class graph {
 
 public:
     vertex_t add_node() { return add_node(default_radius); }
-    vertex_t add_node(unsigned radius) {
+    vertex_t add_node(float radius) {
         m_out_neighbours.emplace_back();
         m_in_neighbours.emplace_back();
         m_node_size.push_back( { radius } );
@@ -82,52 +82,4 @@ private:
         }
     }
 
-
-    void split_components() {
-        m_components.resize(size(), -1);
-
-        int component = 0;
-        for (vertex_t u = 0; u < size(); ++u) {
-            if (m_components[u] == -1) {
-                split_components(u, component);
-                ++component;
-            }
-        }
-        m_component_count = component;
-    }
-
-    void split_components(vertex_t u, int component) {
-        m_components[u] = component;
-        for (auto v : m_out_neighbours[u]) {
-            if (m_components[v] == -1) {
-                split_components(v, component);
-            }
-        }
-        for (auto v : m_in_neighbours[u]) {
-            if (m_components[v] == -1) {
-                split_components(v, component);
-            }
-        }
-    }
-
-    void init_subgraphs() {
-        m_subgraphs.reserve(m_component_count);
-        m_mapping.resize(size());
-
-        std::vector<int> counts(m_component_count, 0);
-        for (vertex_t u = 0; u < size(); ++u) {
-            m_mapping[u] = counts[m_components[u]]++;
-            std::cout << u << " -> " << m_mapping[u] << "\n";
-        }
-
-        for (int i = 0; i < m_component_count; ++i) {
-            m_subgraphs.emplace_back(counts[i]);
-        }
-
-        for (vertex_t u = 0; u < size(); ++u) {
-            for (auto v : m_out_neighbours[u]) {
-                m_subgraphs[m_components[u]].add_edge(m_mapping[u], m_mapping[v]);
-            }
-        }
-    }
 };

@@ -23,8 +23,14 @@ public:
     void add_edge(edge e) { m_source.add_edge(e.tail, e.head); }
     void add_edge(vertex_t u, vertex_t v) { add_edge( { u, v } ); }
 
-    vertex_t add_vertex() { m_source.add_node(); }
-    vertex_t add_vertex(float radius) { m_source.add_node(radius); }
+    vertex_t add_vertex() { 
+        auto u = m_source.add_node();
+        m_vertices.push_back(u); 
+    }
+    vertex_t add_vertex(float radius) { 
+        auto u = m_source.add_node(radius);
+        m_vertices.push_back(u);
+    }
 
     void remove_edge(edge e) { m_source.remove_edge(e.tail, e.head); }
     void remove_edge(vertex_t u, vertex_t v) { remove_edge( { u, v } ); }
@@ -60,10 +66,10 @@ public:
     const std::vector<vertex_t>& vertices() const { return m_vertices; }
 
     friend std::ostream& operator<<(std::ostream& out, const subgraph& g) {
-        for (auto u : vertices()) {
+        for (auto u : g.vertices()) {
             out << u << ": {";
             const char* sep = "";
-            for (auto v : out_neighbours(u)) {
+            for (auto v : g.out_neighbours(u)) {
                 out << sep << v;
                 sep = ", ";
             }

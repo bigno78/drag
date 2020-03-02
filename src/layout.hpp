@@ -6,6 +6,7 @@
 #include "interface.hpp"
 #include "subgraph.hpp"
 #include "cycle.hpp"
+#include "layering.hpp"
 
 class sugiyama_layout {
     graph& g;
@@ -55,7 +56,21 @@ private:
         }
     }
 
-    void add_dummy_nodes(detail::subgraph& g, std::vector< std::vector<vertex_t> > hierarchy) {
-        
+    void add_dummy_nodes(detail::subgraph& g, const hierarchy& h) {
+        for (auto u : g.vertices()) {
+            for (auto v : g.out_neighbours(u)) {
+                int span = h.span(u, v);
+                if (span > 1) {
+                    vertex_t s = u;
+                    for (int i = 0; i < span - 1; ++i) {
+                        vertex_t t = g.add_vertex();
+                        g.add_edge(s, t);
+                        s = t;
+                    }
+                    g.add_edge(s, v);
+                    g.remove_edge(u, v);
+                }
+            }
+        }
     }
 };
