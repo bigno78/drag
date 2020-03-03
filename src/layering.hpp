@@ -2,20 +2,26 @@
 
 #include <vector>
 #include <cmath>
+#include <limits>
 
 #include "subgraph.hpp"
 
+namespace detail {
 
-struct layering {
-    virtual std::vector< std::vector<vertex_t> > run() = 0;
-    virtual ~layering() = default;
+struct hierarchy {
+    detail::vertex_flags<int> ranking;
+    std::vector< std::vector<vertex_t> > layers;
+
+    int span(vertex_t u, vertex_t v) const {
+        return ranking[v] - ranking[u];
+    }
 };
 
 
-template <typename T> 
-int sgn(T val) {
-    return (T(0) < val) - (val < T(0));
-}
+struct layering {
+    virtual hierarchy run(const detail::subgraph&) = 0;
+    virtual ~layering() = default;
+};
 
 
 struct tree_node {
@@ -65,12 +71,29 @@ struct tight_tree {
 
 
 class network_simplex_layering : public layering {
-    std::vector<int> ranking;
+    detail::vertex_flags<int> ranking;
     tight_tree tree;
 
 public:
-    std::vector< std::vector<vertex_t> > run() override {
+    hierarchy run(const detail::subgraph& g) override {
+        initialize_ranking(g);
 
+        int min = std::numeric_limits<int>::max();
+        int max = std::numeric_limits<int>::min();
+        for (auto u : g.vertices()) {
+            if (ranking[u] > max)
+                max = ranking[u];
+            if (ranking[u] < min)
+                min = ranking[u];
+        }
+
+        std::vector< std::vector<vertex_t> > layers(max - min);
+
+        for (auto u : g.vertices()) {
+            layers[ ranking[u] - min ].push_back(u);
+        }
+
+        return { ranking, layers };
     }
 
 private:
@@ -88,7 +111,7 @@ private:
      * @param g the graph whose vertices are to be assigned to layers
      * @return resulting ranking
      */
-    void initialize_ranking(const subgraph& g) {
+    void initialize_ranking(const detail::subgraph& g) {
         int curr = g.size();
         unsigned processed = 0;
 
@@ -98,7 +121,7 @@ private:
             for (vertex_t u = 0; u < g.size(); ++u) {
                 if (ranking[u] == -1) {
                     // check if there are any edges going to unranked vertices
-                    for (auto v : g.out_edges(u)) {
+                    for (auto v : g.out_neighbours(u)) {
                         if (ranking[v] == -1) {
                             goto fail;
                         }
@@ -132,10 +155,10 @@ private:
      * reachable from the root through tight edges.
      * 
      */
-    int basic_tree(const subgraph& g, std::vector<bool>& done, vertex_t root) {
+    int basic_tree(const detail::subgraph& g, std::vector<bool>& done, vertex_t root) {
         done[root] = true;
         int added = 1;
-        for (auto u : g.edges(root)) {
+        for (auto u : g.neighbours(root)) {
             if ( !done[u] && std::abs(edge_span({ root, u })) == 1 ) {
                 tree.add_child(root, u);
                 added += basic_tree(g, done, u);
@@ -152,7 +175,7 @@ private:
      * @param ranking ranking of the vertices of the graph
      * @return the spanning tree
      */
-    void initialize_tree(const subgraph& g) {
+    void initialize_tree(const detail::subgraph& g) {
         tree =  tight_tree(g.size());
         tree.root = 0;
         std::vector<bool> done(g.size(), false);
@@ -166,7 +189,7 @@ private:
             int span = g.size();
             for (vertex_t u = 0; u < done.size(); ++u) {
                 if (done[u]) {
-                    for (auto v : g.edges(u)) {
+                    for (auto v : g.neighbours(u)) {
                         int sp = edge_span({ u, v });
                         if (!done[v] && std::abs(sp) < std::abs(span)) {
                             e = { u, v };
@@ -190,3 +213,6 @@ private:
     }
     
 };
+
+
+} // namespace detail

@@ -12,16 +12,25 @@ class sugiyama_layout {
     graph& g;
     std::vector< detail::subgraph > subgraphs;
 
-    std::unique_ptr< detail::cycle_removal > cycle_rem;
+    std::unique_ptr< detail::cycle_removal > cycle_rem = std::make_unique<detail::dfs_removal>();
+    std::unique_ptr< detail::layering > layering = std::make_unique<detail::network_simplex_layering>();
 
     std::vector< std::vector<vertex_t> > edges;
     std::vector< std::vector< std::vector<vertex_t> > > long_edges;
 
+    float node_dist, layer_dist;
 
 public:
     sugiyama_layout(graph& g) : g(g) {}
 
-    void build();
+    void build() {
+        split();
+        for (auto g : subgraphs) {
+            cycle_rem->run(g);
+            layering->run(g);
+        }
+        
+    }
 
     void node_separation(float d);
     void layer_separation(float d);

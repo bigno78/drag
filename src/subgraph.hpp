@@ -63,6 +63,8 @@ public:
 
     const std::vector<vertex_t>& out_neighbours(vertex_t u) const { return m_source.out_neighbours(u); }
     const std::vector<vertex_t>& in_neighbours(vertex_t u) const { return m_source.in_neighbours(u); }
+    chain_range< std::vector<vertex_t> > neighbours(vertex_t u) const { return { out_neighbours(u), in_neighbours(u) }; }
+
     const std::vector<vertex_t>& vertices() const { return m_vertices; }
 
     friend std::ostream& operator<<(std::ostream& out, const subgraph& g) {
@@ -79,24 +81,22 @@ public:
     }
 };
 
-
+/**
+ * Stores a flag of type T for each vertex in the given subgraph
+ */
 template< typename T >
 struct vertex_flags {
-    std::vector< vertex_t > mapping;
     std::vector< T > flags;
 
     vertex_flags(const subgraph& g) : vertex_flags(g, T{}) {}
     
     vertex_flags(const subgraph& g, T val) {
-        vertex_t v = 0;
         for (auto u : g.vertices()) {
-            if (u >= mapping.size()) {
-                mapping.resize(u + 1);
+            if (u >= flags.size()) {
+                flags.resize(u + 1);
             }
-            mapping[u] = v;
-            ++v;
+            flags[u] = val;
         }
-        flags.resize(g.size(), val);
     }
 
     T& operator[](vertex_t u) { return flags[ mapping[u] ]; }
