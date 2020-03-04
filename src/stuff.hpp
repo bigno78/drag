@@ -7,10 +7,6 @@
 
 using vertex_t = unsigned;
 
-struct node {
-    float widht, height;
-};
-
 struct edge {
     vertex_t tail, head;
 };
@@ -78,3 +74,13 @@ struct chain_range {
     iterator begin() { return iterator(std::begin(first), std::end(first), std::begin(second)); }
     iterator end() { return iterator(std::end(second), std::end(first), std::begin(second)); }
 };
+
+template<typename T>
+std::ostream& operator<<(std::ostream& out, const std::vector<T>& vec) {
+    const char* sep = "";
+    for (const auto& x : vec) {
+        out << sep << x;
+        sep = ", ";
+    }
+    return out;
+}

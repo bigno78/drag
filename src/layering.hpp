@@ -36,6 +36,8 @@ struct tight_tree {
     std::vector<tree_node> nodes;
     vertex_t root;
 
+
+    tight_tree() = default;
     tight_tree(unsigned size) : nodes(size) {
         vertex_t u = 0;
         for (auto& n : nodes)
