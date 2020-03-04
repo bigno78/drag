@@ -44,7 +44,7 @@
 class graph {
     std::vector< std::vector<vertex_t> > m_out_neighbours;
     std::vector< std::vector<vertex_t> > m_in_neighbours;
-    std::vector< node > m_node_size;
+    std::vector< float > m_node_size;
 
     float default_radius;
 
@@ -53,7 +53,7 @@ public:
     vertex_t add_node(float radius) {
         m_out_neighbours.emplace_back();
         m_in_neighbours.emplace_back();
-        m_node_size.push_back( { radius } );
+        m_node_size.push_back(radius);
         return m_node_size.size() - 1;
     }
 
@@ -66,6 +66,8 @@ public:
         remove_neighour(m_out_neighbours[tail], head);
         remove_neighour(m_in_neighbours[head], tail);
     }
+
+    float node_size(vertex_t u) const { return m_node_size[u]; }
 
 
     unsigned size() const { return m_node_size.size(); }
@@ -82,4 +84,25 @@ private:
         }
     }
 
+};
+
+
+struct graph_builder {
+    graph g;
+
+    graph_builder& add_edge(vertex_t u, vertex_t v) {
+        add_vertex(u);
+        add_vertex(v);
+        g.add_edge(u, v);
+        return *this;
+    }
+
+    graph build() { return g; }
+    
+private:
+    void add_vertex(vertex_t u) {
+        while (u >= g.size()) {
+            g.add_node();
+        }
+    }
 };

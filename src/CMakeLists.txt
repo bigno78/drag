@@ -4,6 +4,7 @@ project(bakalarka VERSION 0.1.0)
 
 include(CTest)
 enable_testing()
+SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -g")
 
 add_executable(bakalarka dot.cpp)
 
