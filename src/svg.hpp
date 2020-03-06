@@ -3,6 +3,7 @@
 #include <fstream>
 
 #include "vec2.hpp"
+#include "layout.hpp"
 
 class svg_img {
     std::ofstream file;
@@ -46,3 +47,21 @@ public:
         file << "</text>\n";
     }
 };
+
+void draw_to_svg(const sugiyama_layout& l, const std::string& name) {
+    svg_img img(name);
+
+    for (const auto& e : l.edges()) {
+        vec2 prev = *e.begin();
+        for (auto pos : e) {
+            img.draw_line(prev, pos);
+            prev = pos;
+        }
+    }
+
+    int i = 0;
+    for (const auto& node : l.vertices()) {
+        img.draw_circle(node.pos, node.size);
+        img.draw_text(node.pos, std::to_string(i));
+    }
+}
