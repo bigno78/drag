@@ -35,7 +35,7 @@ public:
     sugiyama_layout(graph& g) : g(g) {}
 
     void build() {
-        split();
+        subgraphs = detail::split(g);
 
         for (auto& g : subgraphs) {
             std::cout << g << "------------------\n";
@@ -117,42 +117,6 @@ private:
             u = *g.out_neighbours(u).begin(); // dummy vetex has only one neightbour
         }
         return u;
-    }
-
-    /**
-     * Split the graph into connected components represented by subgrapgs.
-     */
-    void split() {
-        std::vector< std::vector<vertex_t> > components;
-        std::vector< bool > done(g.size(), false);
-        for (auto u : g.vertices()) {
-            if (!done[u]) {
-                components.emplace_back();
-                split(done, components.back(), u);
-            }
-        }
-
-        for (auto component : components) {
-            subgraphs.emplace_back(g, component);
-        }
-    }
-
-    /**
-     * Recursively assign u and all vertices reachable from u in the underlying undirected graph to the same component.
-     */
-    void split(std::vector<bool>& done, std::vector<vertex_t>& component, vertex_t u) {
-        done[u] = true;
-        component.push_back(u);
-        for (auto v : g.out_neighbours(u)) {
-            if (!done[v]) {
-                split(done, component, v);
-            }
-        }
-        for (auto v : g.in_neighbours(u)) {
-            if (!done[v]) {
-                split(done, component, v);
-            }
-        }
     }
 
     /**
