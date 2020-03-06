@@ -11,11 +11,6 @@
 #include "positioning.hpp"
 
 
-struct node {
-    vec2 pos;
-    float size;
-};
-
 
 class sugiyama_layout {
     graph& g;
@@ -38,13 +33,6 @@ public:
         subgraphs = detail::split(g);
 
         for (auto& g : subgraphs) {
-            std::cout << g << "------------------\n";
-            std::vector<edge> rev = cycle_rem->run(g);
-            std::cout << rev << "\n";
-            std::cout << g << "\n\n";
-        }
-
-        /*for (auto& g : subgraphs) {
             std::vector<edge> rev = cycle_rem->run(g);
             detail::hierarchy h = layering->run(g);
             add_dummy_nodes(g, h, rev);
@@ -55,7 +43,7 @@ public:
             }
         }
 
-        construct_paths();*/
+        construct_paths();
     }
 
     void node_separation(float d) { node_dist = d; }

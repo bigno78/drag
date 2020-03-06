@@ -12,18 +12,18 @@ struct vec2 {
     friend vec2 operator*(vec2 vec, T a) { return { a*vec.x, a*vec.y}; }
 };
 
-std::ostream& operator<<(std::ostream& out, vec2 v) {
+inline std::ostream& operator<<(std::ostream& out, vec2 v) {
     out << "[" << v.x << ", " << v.y << "]";
     return out;
 }
 
-vec2 operator+(vec2 lhs, vec2 rhs) { return { lhs.x + rhs.x, lhs.y + rhs.y }; }
-vec2 operator-(vec2 lhs, vec2 rhs) { return { lhs.x - rhs.x, lhs.y - rhs.y }; }
-float to_radians(float deg) { return (M_PI*deg)/180; }
-float magnitude(vec2 v) { return std::sqrt(v.x*v.x + v.y*v.y); }
-vec2 normalized(vec2 v) { return { v.x/magnitude(v), v.y/magnitude(v) }; }
+inline vec2 operator+(vec2 lhs, vec2 rhs) { return { lhs.x + rhs.x, lhs.y + rhs.y }; }
+inline vec2 operator-(vec2 lhs, vec2 rhs) { return { lhs.x - rhs.x, lhs.y - rhs.y }; }
+inline float to_radians(float deg) { return (M_PI*deg)/180; }
+inline float magnitude(vec2 v) { return std::sqrt(v.x*v.x + v.y*v.y); }
+inline vec2 normalized(vec2 v) { return { v.x/magnitude(v), v.y/magnitude(v) }; }
 
-vec2 rotate(vec2 vec, float deg) {
+inline vec2 rotate(vec2 vec, float deg) {
     float rad = to_radians(deg);
     float sin = std::sin(rad);
     float cos = std::cos(rad);

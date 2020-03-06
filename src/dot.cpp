@@ -19,9 +19,5 @@ int main() {
     sugiyama_layout layout(g);
 
     layout.build();
-
-    svg_img svg("img.svg");
-    svg.draw_line({ 20, 20 }, { 50, 50 }, "blue");
-    svg.draw_circle({ 20, 20}, 10);
-    svg.draw_text({20, 20}, "A");
+    draw_to_svg(layout, "neco.svg");
 }

@@ -36,6 +36,13 @@ public:
                 dfs(g, marks, u, reversed_edges);
             }
         }
+
+        for (auto& e : reversed_edges) {
+            g.remove_edge(e);
+            e = reversed(e);
+            g.add_edge(e);
+        }
+
         return reversed_edges;
     }
 
@@ -44,9 +51,7 @@ private:
         marks[u] = state::in_progress;
         for (auto v : g.out_neighbours(u)) {
             if (marks[v] == state::in_progress) { // there is a cycle
-                reversed_edges.push_back({ v, u });
-                g.remove_edge(u, v);
-                g.add_edge(v, u);
+                reversed_edges.push_back({ u, v });
             } else if (marks[v] == state::unvisited) {
                 dfs(g, marks, v, reversed_edges);
             }

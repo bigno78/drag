@@ -80,7 +80,7 @@ public:
 };
 
 
-std::ostream& operator<<(std::ostream& out, const subgraph& g) {
+inline std::ostream& operator<<(std::ostream& out, const subgraph& g) {
     for (auto u : g.vertices()) {
         out << u << ": {";
         const char* sep = "";
@@ -95,9 +95,28 @@ std::ostream& operator<<(std::ostream& out, const subgraph& g) {
 
 
 /**
+ * Recursively assign u and all vertices reachable from u in the underlying undirected graph to the same component.
+ */
+inline void split(const graph& g, std::vector<bool>& done, std::vector<vertex_t>& component, vertex_t u) {
+    done[u] = true;
+    component.push_back(u);
+    for (auto v : g.out_neighbours(u)) {
+        if (!done[v]) {
+            split(g, done, component, v);
+        }
+    }
+    for (auto v : g.in_neighbours(u)) {
+        if (!done[v]) {
+            split(g, done, component, v);
+        }
+    }
+}
+
+
+/**
  * Split the given graph into connected components represented by subgrapgs.
  */
-std::vector<subgraph> split(const graph& g) {
+inline std::vector<subgraph> split(graph& g) {
     std::vector< std::vector<vertex_t> > components;
     std::vector< bool > done(g.size(), false);
 
@@ -114,24 +133,6 @@ std::vector<subgraph> split(const graph& g) {
     }
 
     return subgraphs;
-}
-
-/**
- * Recursively assign u and all vertices reachable from u in the underlying undirected graph to the same component.
- */
-void split(const graph& g, std::vector<bool>& done, std::vector<vertex_t>& component, vertex_t u) {
-    done[u] = true;
-    component.push_back(u);
-    for (auto v : g.out_neighbours(u)) {
-        if (!done[v]) {
-            split(g, done, component, v);
-        }
-    }
-    for (auto v : g.in_neighbours(u)) {
-        if (!done[v]) {
-            split(g, done, component, v);
-        }
-    }
 }
 
 

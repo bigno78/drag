@@ -1,5 +1,7 @@
 #pragma once
 
+#include "vec2.hpp"
+
 /**
  * Data structures and useful functions that are needed everywhere.
  * File name is in progress.
@@ -17,6 +19,11 @@ inline std::ostream& operator<<(std::ostream& out, edge e) {
     out << "(" << e.tail << ", " << e.head << ")";
     return out;
 }
+
+struct node {
+    vec2 pos;
+    float size;
+};
 
 template <typename T> 
 int sgn(T val) {
@@ -72,7 +79,9 @@ struct chain_range {
     };
 
     iterator begin() { return iterator(std::begin(first), std::end(first), std::begin(second)); }
+    iterator begin() const { return iterator(std::begin(first), std::end(first), std::begin(second)); }
     iterator end() { return iterator(std::end(second), std::end(first), std::begin(second)); }
+    iterator end() const { return iterator(std::end(second), std::end(first), std::begin(second)); }
 };
 
 template<typename T>
