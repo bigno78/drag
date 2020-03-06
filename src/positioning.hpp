@@ -18,11 +18,11 @@ struct positioning {
 };
 
 struct test_positioning : public positioning {
-    std::vector<vec2>& positions;
+    std::vector<node>& nodes;
     positioning_attributes attr;
 
-    test_positioning(std::vector<vec2>& positions, positioning_attributes attr)
-        : positions(positions)
+    test_positioning(std::vector<node>& nodes, positioning_attributes attr)
+        : nodes(nodes)
         , attr(std::move(attr)) {}  
 
     void run(const subgraph& g, const hierarchy& h) override {
@@ -31,7 +31,7 @@ struct test_positioning : public positioning {
             float x = attr.node_dist;
             for (auto u : layer) {
                 x += g.node_size(u);
-                positions[u] = { x, y };
+                nodes[u].pos = { x, y };
                 x += g.node_size(u) + attr.node_dist;
             }
             y += attr.layer_dist;
