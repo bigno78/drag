@@ -9,6 +9,14 @@
 
 namespace detail {
 
+
+/**
+ * Subgraph of a given graph - subset of its vertices + all edges between those vertices.
+ * 
+ * Vertices which are added after the construction are called dummy vertices. 
+ * They are equal to the original vertices (there can be eges added or removed between them), but their size is always zero.
+ * They can be used to distinguis between the vertices of the original graph and vertices which were added for "algorithmic" purpouses.
+ */
 class subgraph {
     graph& m_source;
     std::vector< vertex_t > m_vertices;
@@ -69,20 +77,63 @@ public:
     chain_range< std::vector<vertex_t> > neighbours(vertex_t u) const { return { out_neighbours(u), in_neighbours(u) }; }
 
     const std::vector<vertex_t>& vertices() const { return m_vertices; }
-
-    friend std::ostream& operator<<(std::ostream& out, const subgraph& g) {
-        for (auto u : g.vertices()) {
-            out << u << ": {";
-            const char* sep = "";
-            for (auto v : g.out_neighbours(u)) {
-                out << sep << v;
-                sep = ", ";
-            }
-            out << "}\n";
-        }
-        return out;
-    }
 };
+
+
+std::ostream& operator<<(std::ostream& out, const subgraph& g) {
+    for (auto u : g.vertices()) {
+        out << u << ": {";
+        const char* sep = "";
+        for (auto v : g.out_neighbours(u)) {
+            out << sep << v;
+            sep = ", ";
+        }
+        out << "}\n";
+    }
+    return out;
+}
+
+
+/**
+ * Split the given graph into connected components represented by subgrapgs.
+ */
+std::vector<subgraph> split(const graph& g) {
+    std::vector< std::vector<vertex_t> > components;
+    std::vector< bool > done(g.size(), false);
+
+    for (auto u : g.vertices()) {
+        if (!done[u]) {
+            components.emplace_back();
+            split(g, done, components.back(), u);
+        }
+    }
+
+    std::vector<subgraph> subgraphs;
+    for (auto component : components) {
+        subgraphs.emplace_back(g, component);
+    }
+
+    return subgraphs;
+}
+
+/**
+ * Recursively assign u and all vertices reachable from u in the underlying undirected graph to the same component.
+ */
+void split(const graph& g, std::vector<bool>& done, std::vector<vertex_t>& component, vertex_t u) {
+    done[u] = true;
+    component.push_back(u);
+    for (auto v : g.out_neighbours(u)) {
+        if (!done[v]) {
+            split(g, done, component, v);
+        }
+    }
+    for (auto v : g.in_neighbours(u)) {
+        if (!done[v]) {
+            split(g, done, component, v);
+        }
+    }
+}
+
 
 /**
  * Stores a flag of type T for each vertex in the given subgraph
@@ -114,8 +165,6 @@ struct vertex_flags {
     }
 };
 
-/*
 
-*/
 
 } //namespace detail

@@ -10,19 +10,26 @@
 #include "layering.hpp"
 #include "positioning.hpp"
 
+
+struct node {
+    vec2 pos;
+    float size;
+};
+
+
 class sugiyama_layout {
     graph& g;
     std::vector< detail::subgraph > subgraphs;
-    std::vector< vec2 > node_positions;
+    std::vector< node > nodes;
 
     float node_dist, layer_dist;
 
     std::unique_ptr< detail::cycle_removal > cycle_rem = std::make_unique< detail::dfs_removal >();
     std::unique_ptr< detail::layering > layering =       std::make_unique< detail::network_simplex_layering >();
     std::unique_ptr< detail::positioning > positioning = 
-                std::make_unique< detail::test_positioning >(node_positions, detail::positioning_attributes{ node_dist, layer_dist } );
+                std::make_unique< detail::test_positioning >(nodes, detail::positioning_attributes{ node_dist, layer_dist } );
 
-    std::vector< std::vector<vec2> > edges;
+    std::vector< std::vector<vec2> > paths;
 
 public:
     sugiyama_layout(graph& g) : g(g) {}
@@ -48,25 +55,26 @@ public:
             }
         }
 
-        construct_edges();*/
+        construct_paths();*/
     }
 
     void node_separation(float d) { node_dist = d; }
     void layer_separation(float d) { layer_dist = d; }
 
-    const std::vector<vec2>& vertices() const { return node_positions; }
+    const std::vector<node>& vertices() const { return nodes; }
+    const std::vector< std::vector<vec2> >& edges() const { return paths; }
 
 private:
-    void construct_edges() {
+    void construct_paths() {
         for (auto& subg : subgraphs) {
             for (auto u : subg.vertices()) {
                 for (auto v : subg.out_neighbours(u)) {
-                    edges.emplace_back(2);
+                    paths.emplace_back(2);
                     while (subg.is_dummy(v)) {
-                        edges.back().push_back( node_positions[v] );
+                        paths.back().push_back( nodes[v].pos );
                         v = v = *g.out_neighbours(v).begin();
                     }
-                    edges.back().push_back( node_positions[v] );
+                    paths.back().push_back( nodes[v].pos );
                 }
             }
         }
