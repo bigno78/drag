@@ -25,17 +25,14 @@ struct cycle_removal {
  * Algorithm for removing cycles in a graph using a depth first search.
  */
 class dfs_removal : public cycle_removal {
+    enum class state : char { done, in_progress, unvisited };
     
 public:
     std::vector<edge> run(subgraph& g) override {
-        // Marks for each vertex of the graph:
-        //   0  undiscovered vertex
-        //  -1 vertex which is being processed ("is on the stack")
-        //   1 finished vertex
-        vertex_flags<int8_t> marks(g, 0);
+        vertex_flags<state> marks(g, state::unvisited);
         std::vector<edge> reversed_edges;
         for (auto u : g.vertices()) {
-            if (marks[u] == 0) {
+            if (marks[u] == state::unvisited) {
                 dfs(g, marks, u, reversed_edges);
             }
         }
@@ -43,18 +40,18 @@ public:
     }
 
 private:
-    void dfs(subgraph& g, vertex_flags<int8_t>& marks, vertex_t u, std::vector<edge>& reversed_edges) {
-        marks[u] = -1;
+    void dfs(subgraph& g, vertex_flags<state>& marks, vertex_t u, std::vector<edge>& reversed_edges) {
+        marks[u] = state::in_progress;
         for (auto v : g.out_neighbours(u)) {
-            if (marks[v] == -1) { // there is a cycle
+            if (marks[v] == state::in_progress) { // there is a cycle
                 reversed_edges.push_back({ v, u });
                 g.remove_edge(u, v);
                 g.add_edge(v, u);
-            } else if (marks[v] == 0) {
+            } else if (marks[v] == state::unvisited) {
                 dfs(g, marks, v, reversed_edges);
             }
         }
-        marks[u] = 1;
+        marks[u] = state::done;
     }
 };
 
