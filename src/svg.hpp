@@ -48,8 +48,22 @@ public:
     }
 };
 
+void draw_arrow(svg_img& img, vec2 from, vec2 to, float size) {
+    vec2 dir = from - to;
+    dir = normalized(dir);
+    img.draw_line(to, to + size * rotate(dir, 45));
+    img.draw_line(to, to + size * rotate(dir, -45));
+}
+
 void draw_to_svg(const sugiyama_layout& l, const std::string& name) {
     svg_img img(name);
+
+    int i = 0;
+    for (const auto& node : l.vertices()) {
+        img.draw_circle(node.pos, node.size);
+        img.draw_text(node.pos, std::to_string(i));
+        ++i;
+    }
 
     for (const auto& e : l.edges()) {
         vec2 prev = *e.begin();
@@ -57,11 +71,6 @@ void draw_to_svg(const sugiyama_layout& l, const std::string& name) {
             img.draw_line(prev, pos);
             prev = pos;
         }
-    }
-
-    int i = 0;
-    for (const auto& node : l.vertices()) {
-        img.draw_circle(node.pos, node.size);
-        img.draw_text(node.pos, std::to_string(i));
+        draw_arrow(img, e[e.size() - 2], e.back(), 5);
     }
 }

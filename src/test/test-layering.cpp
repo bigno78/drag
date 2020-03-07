@@ -2,7 +2,89 @@
 
 #include "catch.hpp"
 #include "../layering.hpp"
+#include "test-utils.hpp"
 
+using namespace detail;
+
+void check_hierarchy(const subgraph& g, const hierarchy& h) {
+    int l = 0;
+    for (auto layer : h.layers) {
+        for (auto u : layer) {
+            REQUIRE( h.ranking[u] == l);
+            for (auto v : g.in_neighbours(u)) {
+                std::cout << edge{v, u} << "\n";
+                REQUIRE( h.ranking[v] < l);
+            }
+            for (auto v : g.out_neighbours(u)) {
+                REQUIRE( h.ranking[v] > l);
+            }
+        }
+        ++l;
+    }
+}
+
+TEST_CASE("Layering stuff.") {
+    graph source = graph_builder()
+                .add_edge(0, 1).add_edge(0, 2).add_edge(0, 6)
+                .add_edge(1, 6).add_edge(1, 3).add_edge(6, 4)
+                .add_edge(6, 3).add_edge(5, 4)
+                .build();
+    subgraph g = make_sub(source);
+
+    network_simplex_layering layering(source);
+    hierarchy h = layering.run(g);
+
+    check_hierarchy(g, h);
+}
+
+TEST_CASE("Splitting long edges.") {
+    graph source = graph_builder()
+                .add_edge(0, 3).add_edge(0, 4).add_edge(0, 5)
+                .add_edge(3, 1).add_edge(3, 2).add_edge(3, 4)
+                .build();
+    subgraph g = make_sub(source);
+
+    vertex_flags<int> ranking(source);
+    ranking[0] = 0;
+    ranking[1] = 3;
+    ranking[2] = 3;
+    ranking[3] = 1;
+    ranking[4] = 2;
+    ranking[5] = 4;
+    hierarchy h = { ranking, { { 0 },
+                               { 3 },
+                               { 4 },
+                               { 1, 2 },
+                               { 5 } } };
+    
+    auto edges = add_dummy_nodes(g, h);
+
+    check_hierarchy(g, h);
+
+    for (auto u : g.vertices()) {
+        for (auto v : g.out_neighbours(u)) {
+            std::cout << u << " " << v << "\n";
+            REQUIRE(h.span(u, v) == 1);
+        }
+    }
+
+    REQUIRE(ranking[0] == 0);
+    REQUIRE(ranking[1] == 3);
+    REQUIRE(ranking[2] == 3);
+    REQUIRE(ranking[3] == 1);
+    REQUIRE(ranking[4] == 2);
+    REQUIRE(ranking[5] == 4);
+
+    for (const auto& [ e, path ] : edges) {
+        REQUIRE( e.tail == path.front() );
+        REQUIRE( e.head == path.back() );
+        for (int i = 1; i < path.size(); ++i) {
+            REQUIRE( has_edge(g, { path[i - 1], path[i] }) );
+        }
+    }
+}
+
+/*
 TEST_CASE("initial ranking") {
     graph g = graph_builder()
                 .add_edge(0, 5).add_edge(0, 4)
@@ -114,3 +196,5 @@ TEST_CASE("initializing the spanning tree") {
         REQUIRE( reachable[u] );
     }
 }
+
+*/

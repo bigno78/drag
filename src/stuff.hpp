@@ -13,6 +13,8 @@ struct edge {
     vertex_t tail, head;
 };
 
+inline bool operator==(edge lhs, edge rhs) { return lhs.head == rhs.head && lhs.tail == rhs.tail; }
+inline bool operator!=(edge lhs, edge rhs) { return !(lhs == rhs); }
 inline edge reversed(edge e) { return {e.head, e.tail}; }
 
 inline std::ostream& operator<<(std::ostream& out, edge e) {

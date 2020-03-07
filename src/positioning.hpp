@@ -32,6 +32,7 @@ struct test_positioning : public positioning {
             for (auto u : layer) {
                 x += g.node_size(u);
                 nodes[u].pos = { x, y };
+                nodes[u].size = g.node_size(u);
                 x += g.node_size(u) + attr.node_dist;
             }
             y += attr.layer_dist;

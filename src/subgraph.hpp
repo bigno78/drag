@@ -145,8 +145,10 @@ struct vertex_flags {
 
     vertex_flags() = default;
 
+    vertex_flags(const graph& g) : flags(g.size(), T{}) {}
+    vertex_flags(const graph& g, T val) : flags(g.size(), val) {}
+
     vertex_flags(const subgraph& g) : vertex_flags(g, T{}) {}
-    
     vertex_flags(const subgraph& g, T val) {
         for (auto u : g.vertices()) {
             if (u >= flags.size()) {

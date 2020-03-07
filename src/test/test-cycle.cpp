@@ -3,17 +3,9 @@
 
 #include "catch.hpp"
 #include "../cycle.hpp"
+#include "test-utils.hpp"
 
 using namespace detail;
-
-
-subgraph make_sub(graph& g) {
-    std::vector<vertex_t> vec;
-    for (int i = 0; i < g.size(); ++i) {
-        vec.push_back(i);
-    }
-    return subgraph(g, vec);
-}
 
 
 bool check_acyclic_(const subgraph& g, std::vector<int>& marks, vertex_t u) {

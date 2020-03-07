@@ -3,6 +3,7 @@
 #include <vector>
 #include <cmath>
 #include <limits>
+#include <utility>
 
 #include "subgraph.hpp"
 
@@ -16,6 +17,55 @@ struct hierarchy {
         return ranking[v] - ranking[u];
     }
 };
+
+struct long_edge {
+    edge orig;
+    std::vector<vertex_t> path;
+
+    long_edge(edge orig, std::vector<vertex_t> path) : orig(orig), path(std::move(path)) {}
+};
+
+/**
+ * Splits all edges that span across more than one layer in the provided hierarchy
+ * into segments that each span across just one layer.
+ * ( aka converts the hierachy into proper hierarchy )
+ */
+std::vector< long_edge > add_dummy_nodes(detail::subgraph& g, detail::hierarchy& h) {
+    std::vector< long_edge > split_edges;
+
+    for (auto u : g.vertices()) {
+        for (auto v : g.out_neighbours(u)) {
+            int span = h.span(u, v);
+            if (span > 1) {
+                split_edges.emplace_back( edge{u, v}, std::vector<vertex_t>{} );
+            }
+        }
+    }
+
+    for (auto& [ orig, path ] : split_edges) {
+        int span = h.span(orig.tail, orig.head);
+        path.push_back(orig.tail);
+
+        vertex_t s = orig.tail;
+        for (int i = 0; i < span - 1; ++i) {
+            vertex_t t = g.add_dummy();
+
+            h.ranking.add_vertex(t);
+            h.ranking[t] = h.ranking[s] + 1;
+            h.layers[ h.ranking[t] ].push_back(t);
+
+            g.add_edge(s, t);
+            path.push_back(t);
+
+            s = t;
+        }
+        path.push_back(orig.head);
+        g.add_edge(s, orig.head);
+        g.remove_edge(orig);
+    }
+
+    return split_edges;
+}
 
 
 struct layering {
@@ -77,6 +127,8 @@ class network_simplex_layering : public layering {
     tight_tree tree;
 
 public:
+    network_simplex_layering(const graph& g) : ranking(g, -1) {}
+
     hierarchy run(const detail::subgraph& g) override {
         initialize_ranking(g);
 
@@ -89,10 +141,11 @@ public:
                 min = ranking[u];
         }
 
-        std::vector< std::vector<vertex_t> > layers(max - min);
+        std::vector< std::vector<vertex_t> > layers(max - min + 1);
 
         for (auto u : g.vertices()) {
-            layers[ ranking[u] - min ].push_back(u);
+            ranking[u] -= min;
+            layers[ ranking[u] ].push_back(u);
         }
 
         return { ranking, layers };
