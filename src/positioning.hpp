@@ -13,7 +13,7 @@ struct positioning_attributes {
 };
 
 struct positioning {
-    virtual void run(const subgraph& g, const hierarchy& h) = 0;
+    virtual vec2 run(const subgraph& g, const hierarchy& h, vec2 origin) = 0;
     virtual ~positioning() = default;
 };
 
@@ -21,22 +21,27 @@ struct test_positioning : public positioning {
     std::vector<node>& nodes;
     positioning_attributes attr;
 
-    test_positioning(std::vector<node>& nodes, positioning_attributes attr)
+    test_positioning(positioning_attributes attr, std::vector<node>& nodes)
         : nodes(nodes)
         , attr(std::move(attr)) {}  
 
-    void run(const subgraph& g, const hierarchy& h) override {
-        float y = attr.layer_dist;
+    vec2 run(const subgraph& g, const hierarchy& h, vec2 origin) override {
+        float y = origin.y + attr.layer_dist;
+        float width = 0;
         for (auto layer : h.layers) {
-            float x = attr.node_dist;
+            float x = origin.x;
             for (auto u : layer) {
-                x += g.node_size(u);
+                x += attr.node_dist + g.node_size(u);
                 nodes[u].pos = { x, y };
                 nodes[u].size = g.node_size(u);
-                x += g.node_size(u) + attr.node_dist;
+                x += g.node_size(u);
+            }
+            if (x > width) {
+                width = x;
             }
             y += attr.layer_dist;
         }
+        return { width, y };
     }
 };
 

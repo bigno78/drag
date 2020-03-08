@@ -173,7 +173,7 @@ private:
         std::vector<vertex_t> to_rank;
         while (processed < g.size()) {
             to_rank.clear();
-            for (vertex_t u = 0; u < g.size(); ++u) {
+            for (auto u : g.vertices()) {
                 if (ranking[u] == -1) {
                     // check if there are any edges going to unranked vertices
                     for (auto v : g.out_neighbours(u)) {

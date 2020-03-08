@@ -47,6 +47,12 @@ public:
 
     float node_size(vertex_t u) const { return m_source.node_size(u); }
 
+    bool has_edge(edge e) const { 
+        auto out = out_neighbours(e.tail);
+        return std::find(out.begin(), out.end(), e.head) != out.end();
+    }
+    bool has_edge(vertex_t u, vertex_t v) { return has_edge( { u, v } ); }
+
     //bool is_edge(edge e) const { ... }
     //bool is_edge(vertex_t u, vertex_t v) const { ... }
 
