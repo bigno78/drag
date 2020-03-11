@@ -7,16 +7,27 @@
 
 namespace detail {
 
+/**
+ * Attributes controlling spacing.
+ */
 struct positioning_attributes {
     float node_dist;
     float layer_dist;
 };
 
+/**
+ * Interface for a positioning algorithm that determines the final positions of nodes.
+ * The y coordinates of nodes on the same layer have to be the same.
+ */
 struct positioning {
     virtual vec2 run(const subgraph& g, const hierarchy& h, vec2 origin) = 0;
     virtual ~positioning() = default;
 };
 
+
+/**
+ * Naive positioning for testing purpouses.
+ */
 struct test_positioning : public positioning {
     std::vector<node>& nodes;
     positioning_attributes attr;
@@ -31,17 +42,18 @@ struct test_positioning : public positioning {
         for (auto layer : h.layers) {
             float x = origin.x;
             for (auto u : layer) {
+                std::cout << g.node_size(u);
                 x += attr.node_dist + g.node_size(u);
                 nodes[u].pos = { x, y };
                 nodes[u].size = g.node_size(u);
                 x += g.node_size(u);
             }
-            if (x > width) {
+            if ((x - origin.x) > width) {
                 width = x;
             }
             y += attr.layer_dist;
         }
-        return { width, y };
+        return { width, y - origin.y };
     }
 };
 

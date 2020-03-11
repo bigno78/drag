@@ -164,6 +164,10 @@ struct vertex_flags {
         }
     }
 
+    // only to be used with T = bool, because the operator[] doesnt work :(
+    T at(vertex_t u) const { return flags[u]; }
+    void set(vertex_t u, T val) { flags[u] = val; }
+
     T& operator[](vertex_t u) { return flags[u]; }
     const T& operator[](vertex_t u) const { return flags[u]; }
 

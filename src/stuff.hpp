@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 #include "vec2.hpp"
 
 /**
@@ -25,6 +27,7 @@ inline std::ostream& operator<<(std::ostream& out, edge e) {
 struct node {
     vec2 pos;
     float size;
+    std::string label;
 };
 
 template <typename T> 
@@ -67,7 +70,12 @@ struct chain_range {
         iterator(It curr, It st_end, It nd_beg)
             : curr(curr)
             , st_end(st_end)
-            , nd_beg(nd_beg) {}
+            , nd_beg(nd_beg) 
+        { 
+            if (curr == st_end) {
+                this->curr = nd_beg;
+            }    
+        }
 
         vertex_t operator*() { return *curr; }
         friend bool operator==(const iterator& lhs, const iterator& rhs) { return lhs.curr == rhs.curr; }

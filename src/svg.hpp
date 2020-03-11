@@ -61,7 +61,7 @@ void draw_to_svg(const sugiyama_layout& l, const std::string& name) {
     int i = 0;
     for (const auto& node : l.vertices()) {
         img.draw_circle(node.pos, node.size);
-        img.draw_text(node.pos, std::to_string(i));
+        img.draw_text(node.pos, labels[i]);
         ++i;
     }
 
