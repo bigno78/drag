@@ -82,6 +82,9 @@ public:
     const std::vector<vertex_t>& in_neighbours(vertex_t u) const { return m_source.in_neighbours(u); }
     chain_range< std::vector<vertex_t> > neighbours(vertex_t u) const { return { out_neighbours(u), in_neighbours(u) }; }
 
+    unsigned out_degree(vertex_t u) const { return m_source.out_neighbours(u).size(); }
+    unsigned in_deree(vertex_t u) const { return m_source.in_neighbours(u).size(); }
+
     const std::vector<vertex_t>& vertices() const { return m_vertices; }
 };
 
@@ -155,7 +158,12 @@ struct vertex_flags {
     vertex_flags(const graph& g, T val) : flags(g.size(), val) {}
 
     vertex_flags(const subgraph& g) : vertex_flags(g, T{}) {}
-    vertex_flags(const subgraph& g, T val) {
+    vertex_flags(const subgraph& g, T val) { resize(g, val); }
+
+    void resize(const graph& g) { flags.resize(g.size()); }
+    void resize(const graph& g, T val) { flags.resize(g.size(), val); }
+    void resize(const subgraph& g) { resize(g, T{}); }
+    void resize(const subgraph& g, T val) {
         for (auto u : g.vertices()) {
             if (u >= flags.size()) {
                 flags.resize(u + 1);
@@ -175,6 +183,10 @@ struct vertex_flags {
         if (u >= flags.size()) {
             flags.resize(u + 1);
         }
+    }
+
+    bool contains(vertex_t u) const {
+        return u < flags.size();
     }
 };
 

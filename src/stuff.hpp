@@ -35,23 +35,27 @@ int sgn(T val) {
     return (T(0) < val) - (val < T(0));
 }
 
+template<typename T>
 struct range {
-    vertex_t range_end;
+    T  r_start;
+    T r_end; 
+    int step;
 
-    range(vertex_t end) : range_end(end) {}
+    range(T start, T end, int step) : r_start(start), r_end(end), step(step) {}
 
     struct iterator {
-        vertex_t val = 0;
-        iterator(vertex_t val) : val(val) {}
+        T val;
+        int step;
+        iterator(T val, int step) : val(val), step(step) {}
 
         vertex_t operator*() { return val; }
         friend bool operator==(const iterator& lhs, const iterator& rhs) { return lhs.val == rhs.val; }
         friend bool operator!=(const iterator& lhs, const iterator& rhs) { return !(lhs == rhs); }
-        iterator& operator++() { val++; return *this; }
+        iterator& operator++() { val += step; return *this; }
     };
     
-    iterator begin() { return iterator(0); }
-    iterator end() { return iterator(range_end); }
+    iterator begin() const { return iterator(r_start, step); }
+    iterator end() const { return iterator(r_end, step); }
 };
 
 template<typename T>

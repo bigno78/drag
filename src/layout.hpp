@@ -9,6 +9,7 @@
 #include "cycle.hpp"
 #include "layering.hpp"
 #include "positioning.hpp"
+#include "crossing.hpp"
 
 
 class sugiyama_layout {
@@ -23,9 +24,10 @@ class sugiyama_layout {
     detail::positioning_attributes attr { 20, 100 };
 
     // algorithms for individual steps of sugiyama framework
-    std::unique_ptr< detail::cycle_removal > cycle_rem = std::make_unique< detail::dfs_removal >();
-    std::unique_ptr< detail::layering > layering =       std::make_unique< detail::network_simplex_layering >(g);
-    std::unique_ptr< detail::positioning > positioning = std::make_unique< detail::test_positioning >(attr, nodes);
+    std::unique_ptr< detail::cycle_removal > cycle_rem =     std::make_unique< detail::dfs_removal >();
+    std::unique_ptr< detail::layering > layering =           std::make_unique< detail::network_simplex_layering >(g);
+    std::unique_ptr< detail::crossing_reduction > crossing = std::make_unique< detail::barycentric_heuristic >();
+    std::unique_ptr< detail::positioning > positioning =     std::make_unique< detail::test_positioning >(attr, nodes);
 
 public:
     sugiyama_layout(graph& g) : g(g), original_size(g.size()) {}
@@ -67,6 +69,9 @@ private:
         auto long_edges = add_dummy_nodes(g, h);
         update_reversed_edges(reversed_edges, long_edges);
         
+        
+        crossing->run(h);
+       
         // resize the nodes to make space for new dummy nodes
         nodes.resize(this->g.size());
         vec2 dimensions = positioning->run(g, h, start);

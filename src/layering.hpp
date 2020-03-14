@@ -17,16 +17,36 @@ namespace detail {
 struct hierarchy {
     detail::vertex_flags<int> ranking;
     std::vector< std::vector<vertex_t> > layers;
+    subgraph& g;
 
-    hierarchy(const subgraph& g) : hierarchy(g, -1) {}
-    hierarchy(const subgraph& g, int val) : ranking(g, val) {}
+    hierarchy(subgraph& g) : hierarchy(g, -1) {}
+    hierarchy(subgraph& g, int val) : ranking(g, val), g(g) {}
 
     /**
      * Calculates the span of an edge - the number of layers the edge crosses.
      * The span can be negative if the edge goes from higher layer to a lower one.
      */
     int span(vertex_t u, vertex_t v) const { return ranking[v] - ranking[u]; }
+
+    unsigned size() const { return layers.size(); }
+
+    const std::vector<vertex_t>& layer(vertex_t u) const { return layers[ranking[u]]; }
 };
+
+std::ostream& operator<<(std::ostream& out, const hierarchy& h) {
+    out << "ranking: [";
+    for (auto u : h.g.vertices()) {
+        out << h.ranking[u] << ", ";    
+    }
+    out << "]\n";
+    for (const auto& l : h.layers) {
+        for (auto u : l) {
+            out << u << " ";
+        }
+        out << "\n";
+    }
+    return out;
+}
 
 
 /**
@@ -93,7 +113,7 @@ std::vector< long_edge > add_dummy_nodes(detail::subgraph& g, detail::hierarchy&
  * Proper hierarchy is a hierarchy where each edge has a positive span.
  */
 struct layering {
-    virtual hierarchy run(const detail::subgraph&) = 0;
+    virtual hierarchy run(detail::subgraph&) = 0;
     virtual ~layering() = default;
 };
 
@@ -195,7 +215,7 @@ class network_simplex_layering : public layering {
 public:
     network_simplex_layering(const graph& g) : tree(g) {}
 
-    hierarchy run(const detail::subgraph& g) override {
+    hierarchy run(detail::subgraph& g) override {
         hierarchy h = initialize_ranking(g);
         initialize_tree(g, h);
         postorder_search();
@@ -209,10 +229,7 @@ public:
                         std::to_string(tree.node(u).parent) + ":" + 
                         std::to_string(tree.node(u).order) + "," + 
                         std::to_string(tree.node(u).min) + "]";*/
-            labels[u] = std::to_string(u) + " [" + 
-                        std::to_string(tree.node(u).parent) + "," +
-                        std::to_string(tree.node(u).cut_value) + "/" + 
-                        std::to_string(tree.node(u).out_cut_value)  + "]";
+            labels[u] = std::to_string(u);
         }
 
         int min = std::numeric_limits<int>::max();
@@ -249,7 +266,7 @@ private:
      * @param g the graph whose vertices are to be assigned to layers
      * @return resulting ranking
      */
-    hierarchy initialize_ranking(const detail::subgraph& g) {
+    hierarchy initialize_ranking(detail::subgraph& g) {
         hierarchy h(g, -1);
         int curr = g.size();
         unsigned processed = 0;
@@ -386,18 +403,14 @@ fail: ;
      * Requires the cut values of the edges between 'v' and its children to be already calculated.
      */
     void set_cut_value(const subgraph& g, hierarchy& h, vertex_t u, vertex_t v) {
-        std::cout << "set " << edge{u,v} << "\n";
         int val = 0;
 
         for (auto child : tree.children(v)) {
             val += tree.node(v).dir * tree.node(child).dir * tree.node(child).out_cut_value;
-            std::cout << val << " after " << child << "\n";
         }
         for (auto x : g.neighbours(v)) {
             int dir = sgn(h.span(x, v));
-            std::cout << edge{x, v} << "\n";
             if (tree.component( { u, v }, x ) == u) {
-                std::cout << dir * tree.node(v).dir << "\n";
                 val += dir * tree.node(v).dir;
             }
         }
@@ -409,8 +422,7 @@ fail: ;
                 val -= dir * tree.node(v).dir;
             }
         }
-        tree.node(v).out_cut_value = val;
-        std::cout << "done " << edge{u,v} << "\n";   
+        tree.node(v).out_cut_value = val;  
     }
 
     /**
@@ -484,18 +496,14 @@ fail: ;
     }
 
     void optimize_edge_length(const subgraph& g, hierarchy& h) {
-        std::cout << "BBBBIIIIIIIIIIITCH!\n";
 repeat:
         for (auto u : g.vertices()) {
             if (u != tree.root && tree.node(u).cut_value < 0) {
                 tree_edge leaving = { static_cast<vertex_t>(tree.node(u).parent), u, sgn(h.span(tree.node(u).parent, u)) };
-                std::cout << "leaving: " << leaving.u << ", " << leaving.v << "(" << leaving.dir << ")\n";
                 tree_edge entering = find_entering_edge(g, h, leaving);
-                std::cout << "entering: " << entering.u << ", " << entering.v << "(" << entering.dir << ")\n";
                 switch_tree_edges(g, h, leaving, entering);
                 int d = h.span( entering.u, entering.v );
                 d = -d + sgn(d);
-                std::cout << "move by " << d << "\n";
                 move_subtree(h, entering.v, d);
                 goto repeat;
             }
