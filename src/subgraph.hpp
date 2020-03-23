@@ -3,11 +3,26 @@
 #include <vector>
 #include <algorithm>
 
-#include "stuff.hpp"
+#include "utils.hpp"
 #include "interface.hpp"
 
 
 namespace detail {
+
+
+struct edge {
+    vertex_t tail, head;
+};
+
+inline bool operator==(edge lhs, edge rhs) { return lhs.head == rhs.head && lhs.tail == rhs.tail; }
+inline bool operator!=(edge lhs, edge rhs) { return !(lhs == rhs); }
+
+inline edge reversed(edge e) { return {e.head, e.tail}; }
+
+inline std::ostream& operator<<(std::ostream& out, edge e) {
+    out << "(" << e.tail << ", " << e.head << ")";
+    return out;
+}
 
 
 /**
@@ -52,31 +67,6 @@ public:
         return std::find(out.begin(), out.end(), e.head) != out.end();
     }
     bool has_edge(vertex_t u, vertex_t v) { return has_edge( { u, v } ); }
-
-    //bool is_edge(edge e) const { ... }
-    //bool is_edge(vertex_t u, vertex_t v) const { ... }
-
-    //bool is_connected(edge e) const { ... }
-    //bool is_connected(vertex_t u, vertex_t v) const { ... }
-
-    /*int edge_orientation(edge e) const { 
-        if ( is_edge(e) )
-            return 1;
-        if ( is_edge(reversed(e)) )
-            return -1;
-        return 0;
-    }
-    int edge_orientation(vertex_t u, vertex_t v) const { return edge_orientation( {u, v} ); }*/
-
-    /*void add_vertices(unsigned count) {
-        unsigned new_size = size() + count;
-        for (auto& row : matrix) {
-            row.resize(new_size, false);
-        }
-        for (int i = 0; i < count; ++i) {
-            matrix.emplace_back(new_size, false);
-        }
-    }*/
 
     const std::vector<vertex_t>& out_neighbours(vertex_t u) const { return m_source.out_neighbours(u); }
     const std::vector<vertex_t>& in_neighbours(vertex_t u) const { return m_source.in_neighbours(u); }
@@ -149,47 +139,59 @@ inline std::vector<subgraph> split(graph& g) {
  * Stores a flag of type T for each vertex in the given subgraph
  */
 template< typename T >
-struct vertex_flags {
-    std::vector< T > flags;
+struct vertex_map {
+    std::vector< T > data;
 
-    vertex_flags() = default;
+    vertex_map() = default;
 
-    vertex_flags(const graph& g) : flags(g.size(), T{}) {}
-    vertex_flags(const graph& g, T val) : flags(g.size(), val) {}
+    vertex_map(const graph& g) : data(g.size(), T{}) {}
+    vertex_map(const graph& g, T val) : data(g.size(), val) {}
 
-    vertex_flags(const subgraph& g) : vertex_flags(g, T{}) {}
-    vertex_flags(const subgraph& g, T val) { resize(g, val); }
+    vertex_map(const subgraph& g) : vertex_map(g, T{}) {}
+    vertex_map(const subgraph& g, T val) { resize(g, val); }
 
-    void resize(const graph& g) { flags.resize(g.size()); }
-    void resize(const graph& g, T val) { flags.resize(g.size(), val); }
+    void resize(const graph& g) { data.resize(g.size()); }
+    void resize(const graph& g, T val) { data.resize(g.size(), val); }
     void resize(const subgraph& g) { resize(g, T{}); }
     void resize(const subgraph& g, T val) {
         for (auto u : g.vertices()) {
-            if (u >= flags.size()) {
-                flags.resize(u + 1);
+            if (u >= data.size()) {
+                data.resize(u + 1);
             }
-            flags[u] = val;
+            data[u] = val;
         }
     }
 
     // only to be used with T = bool, because the operator[] doesnt work :(
-    T at(vertex_t u) const { return flags[u]; }
-    void set(vertex_t u, T val) { flags[u] = val; }
+    T at(vertex_t u) const { return data[u]; }
+    void set(vertex_t u, T val) { data[u] = val; }
 
-    T& operator[](vertex_t u) { return flags[u]; }
-    const T& operator[](vertex_t u) const { return flags[u]; }
+    T& operator[](vertex_t u) { return data[u]; }
+    const T& operator[](vertex_t u) const { return data[u]; }
+
+    void insert(vertex_t u, const T& val) {
+        add_vertex(u);
+        data[u] = val;
+    }
+    void insert(vertex_t u) { insert(u, T{}); }
 
     void add_vertex(vertex_t u) {
-        if (u >= flags.size()) {
-            flags.resize(u + 1);
+        if (u >= data.size()) {
+            data.resize(u + 1);
         }
     }
 
     bool contains(vertex_t u) const {
-        return u < flags.size();
+        return u < data.size();
     }
+
+    void clear() { data.clear(); }
 };
 
+
+// FOR DEBUG PURPOUSES
+graph debug_graph;
+std::map<vertex_t, std::string> debug_labels;
 
 
 } //namespace detail

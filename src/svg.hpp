@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fstream>
+#include <map>
 
 #include "vec2.hpp"
 #include "layout.hpp"
@@ -55,22 +56,41 @@ void draw_arrow(svg_img& img, vec2 from, vec2 to, float size) {
     img.draw_line(to, to + size * rotate(dir, -45));
 }
 
-void draw_to_svg(const sugiyama_layout& l, const std::string& name) {
-    svg_img img(name);
 
-    int i = 0;
+void draw_to_svg( svg_img& img, 
+                  const sugiyama_layout& l,
+                  const std::map<vertex_t, std::string>& labels,
+                  vec2 start = {0,0} ) 
+{
     for (const auto& node : l.vertices()) {
-        img.draw_circle(node.pos, node.size);
-        img.draw_text(node.pos, labels[i]);
-        ++i;
+        img.draw_circle(start + node.pos, node.size);
+        img.draw_text(start + node.pos, labels.at( node.u ) );
     }
 
     for (const auto& e : l.edges()) {
         vec2 prev = *e.begin();
         for (auto pos : e) {
-            img.draw_line(prev, pos);
+            img.draw_line(start + prev, start + pos);
             prev = pos;
         }
-        draw_arrow(img, e[e.size() - 2], e.back(), 5);
+        draw_arrow(img, start + e[e.size() - 2], start + e.back(), 5);
+    }
+}
+
+
+void draw_to_svg(svg_img& img, const sugiyama_layout& l, vec2 start = {0,0}) 
+{
+    for (const auto& node : l.vertices()) {
+        img.draw_circle(start + node.pos, node.size);
+        img.draw_text(start + node.pos, node.default_label );
+    }
+
+    for (const auto& e : l.edges()) {
+        vec2 prev = *e.begin();
+        for (auto pos : e) {
+            img.draw_line(start + prev, start + pos);
+            prev = pos;
+        }
+        draw_arrow(img, start + e[e.size() - 2], start + e.back(), 5);
     }
 }

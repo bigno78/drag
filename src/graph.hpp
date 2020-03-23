@@ -3,8 +3,11 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
+#include <map>
 
-#include "stuff.hpp"
+#include "utils.hpp"
+#include "types.hpp"
+
 
 class graph {
     std::vector< std::vector<vertex_t> > m_out_neighbours;
@@ -71,7 +74,3 @@ private:
         }
     }
 };
-
-// FOR DEBUG PURPOUSES
-std::vector<std::string> labels;
-

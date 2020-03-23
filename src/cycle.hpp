@@ -41,7 +41,7 @@ class dfs_removal : public cycle_removal {
     
 public:
     rev_edges run(subgraph& g) override {
-        vertex_flags<state> marks(g, state::unvisited);
+        vertex_map<state> marks(g, state::unvisited);
         rev_edges reversed_edges;
         for (auto u : g.vertices()) {
             if (marks[u] == state::unvisited) {
@@ -64,7 +64,7 @@ public:
     }
 
 private:
-    void dfs(subgraph& g, vertex_flags<state>& marks, vertex_t u, rev_edges& reversed_edges) {
+    void dfs(subgraph& g, vertex_map<state>& marks, vertex_t u, rev_edges& reversed_edges) {
         marks[u] = state::in_progress;
         for (auto v : g.out_neighbours(u)) {
             if (marks[v] == state::in_progress) { // there is a cycle

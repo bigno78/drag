@@ -3,37 +3,15 @@
 #include <string>
 
 #include "vec2.hpp"
+#include "types.hpp"
 
-/**
- * Data structures and useful functions that are needed everywhere.
- * File name is in progress.
- */
-
-using vertex_t = unsigned;
-
-struct edge {
-    vertex_t tail, head;
-};
-
-inline bool operator==(edge lhs, edge rhs) { return lhs.head == rhs.head && lhs.tail == rhs.tail; }
-inline bool operator!=(edge lhs, edge rhs) { return !(lhs == rhs); }
-inline edge reversed(edge e) { return {e.head, e.tail}; }
-
-inline std::ostream& operator<<(std::ostream& out, edge e) {
-    out << "(" << e.tail << ", " << e.head << ")";
-    return out;
-}
-
-struct node {
-    vec2 pos;
-    float size;
-    std::string label;
-};
 
 template <typename T> 
 int sgn(T val) {
     return (T(0) < val) - (val < T(0));
 }
+
+
 
 template<typename T>
 struct range {
@@ -48,7 +26,7 @@ struct range {
         int step;
         iterator(T val, int step) : val(val), step(step) {}
 
-        vertex_t operator*() { return val; }
+        T operator*() { return val; }
         friend bool operator==(const iterator& lhs, const iterator& rhs) { return lhs.val == rhs.val; }
         friend bool operator!=(const iterator& lhs, const iterator& rhs) { return !(lhs == rhs); }
         iterator& operator++() { val += step; return *this; }
@@ -57,6 +35,8 @@ struct range {
     iterator begin() const { return iterator(r_start, step); }
     iterator end() const { return iterator(r_end, step); }
 };
+
+
 
 template<typename T>
 struct chain_range {
@@ -97,6 +77,8 @@ struct chain_range {
     iterator end() { return iterator(std::end(second), std::end(first), std::begin(second)); }
     iterator end() const { return iterator(std::end(second), std::end(first), std::begin(second)); }
 };
+
+
 
 template<typename T>
 std::ostream& operator<<(std::ostream& out, const std::vector<T>& vec) {
