@@ -75,10 +75,9 @@ public:
 private:
 
     vec2 process_subgraph(detail::subgraph& g, vec2 start) {
-        //std::cout << g << "\n";
         auto reversed_edges = cycle_rem->run(g);
-/*
-        for (auto e : reversed_edges.reversed) {
+
+        /*for (auto e : reversed_edges.reversed) {
             std::cout << e << "\n";
         }
         for (auto e : reversed_edges.collapsed) {
@@ -87,7 +86,7 @@ private:
 
         detail::hierarchy h = layering->run(g);
 
-        /*auto long_edges = add_dummy_nodes(g, h);
+        auto long_edges = add_dummy_nodes(h);
         update_reversed_edges(reversed_edges, long_edges);
         
 #ifdef CONTROL_CROSSING
@@ -112,8 +111,7 @@ private:
 
         construct_paths(g);
 
-        return dimensions;*/
-        return { 0, 0 };
+        return dimensions;
     }
 
     void init_nodes() {

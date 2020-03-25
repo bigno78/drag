@@ -15,7 +15,8 @@ namespace detail {
  * Each vertex is part of a layer - the layer is its rank.
  */
 struct hierarchy {
-    detail::vertex_map<int> ranking;
+    vertex_map<int> ranking;
+    vertex_map<int> pos;
     std::vector< std::vector<vertex_t> > layers;
     subgraph& g;
 
@@ -30,7 +31,17 @@ struct hierarchy {
 
     unsigned size() const { return layers.size(); }
 
+    std::vector<vertex_t>& layer(vertex_t u) { return layers[ranking[u]]; }
     const std::vector<vertex_t>& layer(vertex_t u) const { return layers[ranking[u]]; }
+
+    void update_pos() {
+        for (const auto& l : layers) {
+            int i = 0;
+            for (auto u : l) {
+                pos[u] = i++;
+            }
+        }
+    }
 };
 
 std::ostream& operator<<(std::ostream& out, const hierarchy& h) {
@@ -67,12 +78,12 @@ struct long_edge {
  * 
  * @return list of edges which had to be split
  */
-std::vector< long_edge > add_dummy_nodes(detail::subgraph& g, detail::hierarchy& h) {
+std::vector< long_edge > add_dummy_nodes(hierarchy& h) {
     std::vector< long_edge > split_edges;
 
     // find edges to be split
-    for (auto u : g.vertices()) {
-        for (auto v : g.out_neighbours(u)) {
+    for (auto u : h.g.vertices()) {
+        for (auto v : h.g.out_neighbours(u)) {
             int span = h.span(u, v);
             if (span > 1) {
                 split_edges.emplace_back( edge{u, v}, std::vector<vertex_t>{} );
@@ -80,27 +91,28 @@ std::vector< long_edge > add_dummy_nodes(detail::subgraph& g, detail::hierarchy&
         }
     }
 
-    // split them
+    // split the found edges
     for (auto& [ orig, path ] : split_edges) {
         int span = h.span(orig.tail, orig.head);
         path.push_back(orig.tail);
 
         vertex_t s = orig.tail;
         for (int i = 0; i < span - 1; ++i) {
-            vertex_t t = g.add_dummy();
+            vertex_t t = h.g.add_dummy();
 
             h.ranking.add_vertex(t);
             h.ranking[t] = h.ranking[s] + 1;
             h.layers[ h.ranking[t] ].push_back(t);
+            h.pos.insert( t, h.layers[ h.ranking[t] ].size() - 1 );
 
-            g.add_edge(s, t);
+            h.g.add_edge(s, t);
             path.push_back(t);
 
             s = t;
         }
         path.push_back(orig.head);
-        g.add_edge(s, orig.head);
-        g.remove_edge(orig);
+        h.g.add_edge(s, orig.head);
+        h.g.remove_edge(orig);
     }
 
     return split_edges;
@@ -108,15 +120,12 @@ std::vector< long_edge > add_dummy_nodes(detail::subgraph& g, detail::hierarchy&
 
 
 /**
- * Interface for an algorithm which createch a proper hierarchy for a given graph.
- * 
- * Proper hierarchy is a hierarchy where each edge has a positive span.
+ * Interface for an algorithm which createch a hierarchy for a given graph.
  */
 struct layering {
     virtual hierarchy run(detail::subgraph&) = 0;
     virtual ~layering() = default;
 };
-
 
 
 struct tree_edge {
@@ -226,7 +235,7 @@ class network_simplex_layering : public layering {
 public:
     network_simplex_layering(const graph& g) : tree(g) {}
 
-    hierarchy run(detail::subgraph& g) override {
+    hierarchy run(subgraph& g) override {
         hierarchy h = initialize_ranking(g);
         initialize_tree(g, h);
         postorder_search();
@@ -236,7 +245,7 @@ public:
         //std::cout << tree << "\n";
 
         optimize_edge_length(g, h);
-        std::cout << "done " << g.size() << "\n";
+
         for (int i = 0; i < g.size(); ++i) {
             debug_labels[i] = std::to_string(i) + "(" +
                         std::to_string(tree.node(i).parent) + ", " +
@@ -253,10 +262,12 @@ public:
         }
 
         h.layers.resize(max - min + 1);
+        h.pos.resize(h.g);
 
         for (auto u : g.vertices()) {
             h.ranking[u] -= min;
             h.layers[ h.ranking[u] ].push_back(u);
+            h.pos[u] = h.layers[ h.ranking[u] ].size() - 1;
         }
 
         return h;
@@ -310,7 +321,7 @@ fail: ;
      * Constructs a tree (it wont necessarly be the final spanning tree) of all vertices
      * reachable from the root through tight edges. 
      */
-    int basic_tree(const detail::subgraph& g, vertex_map<bool>& done, const hierarchy& h, vertex_t root) {
+    int basic_tree(const subgraph& g, vertex_map<bool>& done, const hierarchy& h, vertex_t root) {
         done.set(root, true);
         int added = 1;
 
@@ -528,6 +539,7 @@ fail: ;
         return entering;
     }
 
+    // Applies a function to each node of the subtree with given root in a preorder search
     template< typename Func >
     void for_each_node(vertex_t root, Func f) {
         f(root);

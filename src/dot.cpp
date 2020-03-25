@@ -2,7 +2,7 @@
 #include <dirent.h>
 
 //#define DEBUG_COORDINATE
-//#define CONTROL_CROSSING
+#define CONTROL_CROSSING
 //#define DEBUG_CROSSING
 
 #include "interface.hpp"
@@ -11,58 +11,35 @@
 
 #include "svg.hpp"
 
-int ej = 0;
-void layout(graph g, std::string label) {
-    sugiyama_layout l(g);
-    l.build();
-    std::cout << label << "\n";
-    ++ej;
-}
 
-void generate(graph g, vertex_t u, std::string label) {
-    if (u == g.size() - 1) {
-        layout(g, label);
-        return;
-    }
-    unsigned n = g.size() - u - 1;
 
-    int iter = 0;
-    for (int k = 1; k <= n; ++k) {
-        std::vector<bool> stuff( n, false );
-        std::fill( stuff.end() - k, stuff.end(), true );
+void layout_files(const std::string& in_path, const std::string& out_path) {
+    DIR *dir;
+    struct dirent *ent;
+    if ( (dir = opendir (in_path.c_str())) != NULL ) {
 
-        do {
-            for (int i = 0; i < stuff.size(); ++i) {
-                if (stuff[i]) {
-                    g.add_edge(u, u + 1 + i);
-                }
+        while ((ent = readdir (dir)) != NULL) {
+           
+            std::string name{ ent->d_name };
+            if (name == "." || name == "..") {
+                continue;
             }
+            //std::cout << name << "\n";
 
-            generate(g, u + 1, label + std::to_string(iter));
-
-            for (int i = 0; i < stuff.size(); ++i) {
-                if (stuff[i]) {
-                    g.remove_edge(u, u + 1 + i);
-                }
-            }
-            ++iter;
-        } while( std::next_permutation(stuff.begin(), stuff.end()) );
+            graph g;
+            auto labels = parse(in_path + name, g);
+            svg_img img(out_path + name + ".svg");
+            sugiyama_layout l(g);
+            l.build();
+            draw_to_svg(img, l, labels);
+        }
+        closedir (dir);
+    } else {
+        perror ("");
     }
-}
-
-void do_it(int n) {
-    graph g;
-    for (int i = 0; i < n; ++i) {
-        g.add_node();
-    }
-    std::cout << g.size() << "\n";
-    generate(g, 0, "");
 }
 
 int main() {
-    do_it(8);
-    std::cout << "ej: " << ej << "\n";
-    return 0;
     /*graph g = graph_builder()
                 .add_edge(0, 1).add_edge(0, 5).add_edge(0, 6)
                 .add_edge(1, 2).add_edge(2, 3).add_edge(3, 4)
@@ -74,89 +51,53 @@ int main() {
                 .add_edge(6, 8)
                 .build();*/
 
-    DIR *dir;
-    struct dirent *ent;
-    if ( (dir = opendir ("../../input_graphs_dot/")) != NULL ) {
-        /* print all the files and directories within directory */
-        while ((ent = readdir (dir)) != NULL) {
-            std::string name{ ent->d_name };
-            if (name == "." || name == ".." || name != "g.11.16.dot") {
-                continue;
-            }
-            std::cout << name << "\n";
+    graph g;
+    auto labels = parse("../../input_graphs_dot/g.11.20.dot", g);
 
-            graph g;
-            auto labels = parse("../../input_graphs_dot/" + name, g);
-            svg_img img(std::string{"../../my_output/"} + ent->d_name + ".svg");
+#if defined(CONTROL_CROSSING)
 
-            /*sugiyama_layout l(g);
-            l.build();
-            draw_to_svg(img, l, labels);*/
+    svg_img img("cross.svg");
+    graph g2 = g;
 
-            graph tmp = g;
-            sugiyama_layout l1(g);
-            sugiyama_layout l2(tmp);
-            //crossing_enabled = false;
-            l1.build();
-            //crossing_enabled = true;
-            l2.build();
-            draw_to_svg(img, l1, labels, vec2{ 0, 0 } );
-            draw_to_svg(img, l2, labels, vec2{ l1.width() + 20, 0 });
+    sugiyama_layout l1(g);
+    sugiyama_layout l2(g2);
+  
+    crossing_enabled = false;
+    l1.build();
 
-           /* for (int i = 0; i < 4; ++i) {
-                svg_img img("neco" + std::to_string(i) + ".svg");
-                graph gr = g;
-                produce_layout = i;
-                sugiyama_layout layout(gr);
-                layout.build();
-                draw_to_svg(img, layout);
-            }
-            svg_img img("neco.svg");
-            produce_layout = 4;
-            sugiyama_layout layout(g);
-            layout.build();
-            draw_to_svg(img, layout );*/
+    crossing_enabled = true;
+    l2.build();
 
-        }
-        closedir (dir);
-    } else {
-        /* could not open directory */
-        perror ("");
-        return EXIT_FAILURE;
-    }
-
+    draw_to_svg(img, l1);
+    draw_to_svg(img, l2, vec2{ l1.width() + 20, 0 });
     
-    
-    /*sugiyama_layout layout(debug_graph);
-    layout.build();
-    labels = debug_labels;
-    draw_to_svg(layout, "debug.svg");*/
+#elif defined(DEBUG_COORDINATE)
 
-#ifdef CONTROL_CROSSING
-   /* graph g;
-    svg_img img("neco.svg");
-    vec2 start = { 0, 0 };*/
-    
-#endif
-
-#ifdef DEBUG_COORDINATE
-   /* svg_img img("neco.svg");
-    vec2 start = { 0, 0 };
-    float w = 0;
     for (int i = 0; i < 4; ++i) {
+        svg_img img{ "coord" + std::to_string(i) + ".svg" };
         graph gr = g;
         produce_layout = i;
-        labels.resize(gr.size());
         sugiyama_layout layout(gr);
         layout.build();
         draw_to_svg(img, layout, start);
-        start.x += layout.width();
-        w = layout.height();
     }
+    svg_img img{ "coord-final.svg" };
     produce_layout = 4;
     sugiyama_layout layout(g);
     layout.build();
-    draw_to_svg(img, layout, { 0, w } );*/
+    draw_to_svg(img, layout);
+
+#elif defined(DEBUG_GRAPH)
+
+    svg_img img{ "debug.svg" };
+    sugiyama_layout layout(g);
+    layout.build();
+    draw_to_svg(img, layout);
+
+#else
+
+    layout_files("../../input_graphs_dot/", "../../my_output/");
+
 #endif
 
 }
