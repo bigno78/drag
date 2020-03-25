@@ -1,26 +1,103 @@
 #include <iostream>
+#include <dirent.h>
+
+//#define DEBUG_COORDINATE
+#define CONTROL_CROSSING
+//#define DEBUG_CROSSING
 
 #include "interface.hpp"
+#include "layout.hpp"
+#include "parser.hpp"
 
-template<typename Son>
-struct base {
-    base() { f(); }
-    void f() { static_cast<Son&>(*this).g(); }
-};
+#include "svg.hpp"
 
-struct derived : base<derived> {
-    derived() : base() { }
-    void g() { std::cout << "derived::g\n"; }
-};
+
+
+void layout_files(const std::string& in_path, const std::string& out_path) {
+    DIR *dir;
+    struct dirent *ent;
+    if ( (dir = opendir (in_path.c_str())) != NULL ) {
+
+        while ((ent = readdir (dir)) != NULL) {
+           
+            std::string name{ ent->d_name };
+            if (name == "." || name == "..") {
+                continue;
+            }
+            //std::cout << name << "\n";
+
+            graph g;
+            auto labels = parse(in_path + name, g);
+            svg_img img(out_path + name + ".svg");
+            sugiyama_layout l(g);
+            l.build();
+            draw_to_svg(img, l, labels);
+        }
+        closedir (dir);
+    } else {
+        perror ("");
+    }
+}
 
 int main() {
+    /*graph g = graph_builder()
+                .add_edge(0, 1).add_edge(0, 5).add_edge(0, 6)
+                .add_edge(1, 2).add_edge(2, 3).add_edge(3, 4)
+                .add_edge(5, 7).add_edge(6, 7).add_edge(7, 4)
+                .build();*/
+    /*graph g = graph_builder()
+                .add_edge(0, 2).add_edge(0, 3).add_edge(1, 3).add_edge(1, 4)
+                .add_edge(4, 6).add_edge(5, 7).add_edge(6, 7)
+                .add_edge(6, 8)
+                .build();*/
+
     graph g;
-    g.add_node();
-    g.add_node();
-    g.add_node();
-    g.add_node();
-    g.add_node();
-    g.add_edge(1, 2);
-    g.add_edge(3, 4);
-    g();
+    auto labels = parse("../../input_graphs_dot/g.11.20.dot", g);
+
+#if defined(CONTROL_CROSSING)
+
+    svg_img img("cross.svg");
+    graph g2 = g;
+
+    sugiyama_layout l1(g);
+    sugiyama_layout l2(g2);
+  
+    crossing_enabled = false;
+    l1.build();
+
+    crossing_enabled = true;
+    l2.build();
+
+    draw_to_svg(img, l1);
+    draw_to_svg(img, l2, vec2{ l1.width() + 20, 0 });
+    
+#elif defined(DEBUG_COORDINATE)
+
+    for (int i = 0; i < 4; ++i) {
+        svg_img img{ "coord" + std::to_string(i) + ".svg" };
+        graph gr = g;
+        produce_layout = i;
+        sugiyama_layout layout(gr);
+        layout.build();
+        draw_to_svg(img, layout, start);
+    }
+    svg_img img{ "coord-final.svg" };
+    produce_layout = 4;
+    sugiyama_layout layout(g);
+    layout.build();
+    draw_to_svg(img, layout);
+
+#elif defined(DEBUG_GRAPH)
+
+    svg_img img{ "debug.svg" };
+    sugiyama_layout layout(g);
+    layout.build();
+    draw_to_svg(img, layout);
+
+#else
+
+    layout_files("../../input_graphs_dot/", "../../my_output/");
+
+#endif
+
 }

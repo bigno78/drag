@@ -4,48 +4,82 @@
 
 #include "subgraph.hpp"
 
+namespace detail {
+
+/**
+ * Holds the edges that were reversed to remove cycles.
+ * This struct contains the edges in their reversed form
+ * i.e. if edge (u, v) cuased a cycle, it would be saved as (v, u)
+ */
+struct rev_edges {
+    std::vector<edge> reversed;   /**< The edges that were reversed. */
+    std::vector<edge> collapsed;  /**< Reversed edges which resulted in a duplicated edge and thus were collapsed */
+};
+
+
 /** 
  * Interface for a cycle removal algorithm.
  */
 struct cycle_removal {
-    virtual void run(subgraph& g) = 0;
+
+    /**
+     * Modifies the input graph by reversing certain edges to remove cycles.
+     * 
+     * @return the reversed edges
+     */
+    virtual rev_edges run(subgraph& g) = 0;
+
     virtual ~cycle_removal() = default;
 };
+
 
 /**
  * Algorithm for removing cycles in a graph using a depth first search.
  */
 class dfs_removal : public cycle_removal {
-    /**
-     * Marks for each verter of the graph:
-     * 0  undiscovered vertex
-     * -1 vertex which is being processed ("is on the stack")
-     * 1 finished vertex
-     */
-    std::vector<int8_t> marks;
-
+    enum class state : char { done, in_progress, unvisited };
+    
 public:
-    void run(subgraph& g) override {
-        marks.resize(g.size(), 0);
-        for (vertex_t u = 0; u < g.size(); ++u) {
-            if (marks[u] == 0) {
-                dfs(g, u);
+    rev_edges run(subgraph& g) override {
+        vertex_map<state> marks(g, state::unvisited);
+        rev_edges reversed_edges;
+        for (auto u : g.vertices()) {
+            if (marks[u] == state::unvisited) {
+                dfs(g, marks, u, reversed_edges);
             }
         }
-        marks.clear();
+
+        for (auto& e : reversed_edges.reversed) {
+            g.remove_edge(e);
+            e = reversed(e);
+            g.add_edge(e);
+        }
+
+        for (auto& e : reversed_edges.collapsed) {
+            g.remove_edge(e);
+            e = reversed(e);
+        }
+
+        return reversed_edges;
     }
 
 private:
-    void dfs(subgraph& g, vertex_t u) {
-        marks[u] = -1;
-        for (auto v : g.out_edges(u)) {
-            if (marks[v] == -1) { // there is a cycle
-                g.remove_edge(u, v);
-                g.add_edge(v, u);
-            } else if (marks[v] == 0) {
-                dfs(g, v);
+    void dfs(subgraph& g, vertex_map<state>& marks, vertex_t u, rev_edges& reversed_edges) {
+        marks[u] = state::in_progress;
+        for (auto v : g.out_neighbours(u)) {
+            if (marks[v] == state::in_progress) { // there is a cycle
+                // Yes, I know. It should be saved as (v, u). But at this point I am just saving edges
+                // to be reversed later. When that happens the ordered will be switched.
+                if (g.has_edge(v, u))
+                    reversed_edges.collapsed.push_back( { u, v } );
+                else
+                    reversed_edges.reversed.push_back( { u, v } );
+            } else if (marks[v] == state::unvisited) {
+                dfs(g, marks, v, reversed_edges);
             }
         }
-        marks[u] = 1;
+        marks[u] = state::done;
     }
 };
+
+} //namespace detail
