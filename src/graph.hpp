@@ -14,7 +14,7 @@ class graph {
     std::vector< std::vector<vertex_t> > m_in_neighbours;
     std::vector< float > m_node_size;
 
-    float default_radius = 40;
+    float default_radius = defaults::node_size;
 
 public:
     vertex_t add_node() { return add_node(default_radius); }

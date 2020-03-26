@@ -26,7 +26,7 @@ class sugiyama_layout {
     vec2 size = { 0, 0 };
 
     // attributes controling spacing
-    detail::positioning_attributes attr { 20, 100 };
+    detail::positioning_attributes attr { defaults::node_dist, defaults::layer_dist };
 
     // algorithms for individual steps of sugiyama framework
     std::unique_ptr< detail::cycle_removal > cycle_rem =     std::make_unique< detail::dfs_removal >();
@@ -75,6 +75,7 @@ public:
 private:
 
     vec2 process_subgraph(detail::subgraph& g, vec2 start) {
+        //std::cout << g << "\n";
         auto reversed_edges = cycle_rem->run(g);
 
         /*for (auto e : reversed_edges.reversed) {

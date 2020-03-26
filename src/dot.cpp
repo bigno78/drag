@@ -2,8 +2,9 @@
 #include <dirent.h>
 
 //#define DEBUG_COORDINATE
-#define CONTROL_CROSSING
+//#define CONTROL_CROSSING
 //#define DEBUG_CROSSING
+#define DEBUG_GRAPH
 
 #include "interface.hpp"
 #include "layout.hpp"
@@ -52,7 +53,8 @@ int main() {
                 .build();*/
 
     graph g;
-    auto labels = parse("../../input_graphs_dot/g.11.20.dot", g);
+    //auto labels = parse("../../input_graphs_dot/g.11.20.dot", g); 
+    auto labels = parse("data/uniform_n20_e32_i1.gv", g);
 
 #if defined(CONTROL_CROSSING)
 
@@ -92,7 +94,7 @@ int main() {
     svg_img img{ "debug.svg" };
     sugiyama_layout layout(g);
     layout.build();
-    draw_to_svg(img, layout);
+    draw_to_svg(img, layout, labels);
 
 #else
 
