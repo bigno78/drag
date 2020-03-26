@@ -49,13 +49,23 @@ public:
         file << text;
         file << "</text>\n";
     }
+
+    void draw_polygon(const std::vector<vec2>& points, const std::string& color = "black") {
+        file << "<polygon ";
+        file << "points=\"";
+        for (auto p : points) {
+            file << p.x << "," << p.y << " ";
+        }
+        file << "\" ";
+        file << "stroke=\"" << color << "\" ";
+        file << "/>";
+    }
 };
 
 void draw_arrow(svg_img& img, vec2 from, vec2 to, float size) {
     vec2 dir = from - to;
     dir = normalized(dir);
-    img.draw_line(to, to + size * rotate(dir, 45));
-    img.draw_line(to, to + size * rotate(dir, -45));
+    img.draw_polygon( { to, to + size * rotate(dir, 45), to + size * rotate(dir, -45) } );
 }
 
 
@@ -75,7 +85,7 @@ void draw_to_svg( svg_img& img,
             img.draw_line(start + prev, start + pos);
             prev = pos;
         }
-        draw_arrow(img, start + e[e.size() - 2], start + e.back(), 5);
+        draw_arrow(img, start + e[e.size() - 2], start + e.back(), 10);
     }
 }
 
