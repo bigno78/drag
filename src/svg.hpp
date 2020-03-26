@@ -32,6 +32,7 @@ public:
         file << "cy=\"" << center.y << "\" ";
         file << "r=\"" << r << "\" ";
         file << "stroke=\"" << color << "\" ";
+        file << "stroke-width=\"2\" ";
         file << "fill=\"white\" ";
         file << "/>\n";
     }
@@ -40,9 +41,10 @@ public:
         file << "<text ";
         file << "x=\"" << pos.x << "\" ";
         file << "y=\"" << pos.y << "\" ";
-        file << "stroke=\"" << color << "\" ";
+        file << "fill=\"" << color << "\" ";
         file << "dominant-baseline=\"middle\" ";
         file << "text-anchor=\"middle\" ";
+        file << "style=\"font-size: 14px; font-family: Times,serif;\" ";
         file << ">";
         file << text;
         file << "</text>\n";

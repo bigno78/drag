@@ -17,5 +17,5 @@ namespace defaults {
     const float margin = 10;
     const float layer_dist = 100;
     const float node_dist = 20;
-    const float node_size = 30;
+    const float node_size = 25;
 }
