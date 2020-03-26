@@ -27,6 +27,9 @@ std::map<vertex_t, std::string> parse(const std::string& file, graph& g) {
             //std::cout << "discarding: " << line << "\n";
             continue;
         }
+        if (head.back() == ';') {
+            head.pop_back();
+        }
 
         if (!contains(nodes, tail)) {
             auto u = g.add_node();
