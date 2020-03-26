@@ -14,6 +14,10 @@ bool contains(const std::map<std::string, vertex_t>& nodes, const std::string& n
 std::map<vertex_t, std::string> parse(const std::string& file, graph& g) {
     std::ifstream in(file);
 
+    if (!in) {
+        std::cerr << "Failed to open '" << file << "'\n";
+    }
+
     std::map<std::string, vertex_t> nodes;
     std::map<vertex_t, std::string> labels;
 

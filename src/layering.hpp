@@ -280,13 +280,8 @@ private:
      * The resulting ranking is not normalized, meaning that the lowest layer doesnt have to be 0.
      * It is also not neccesarly the optimal ranking.
      * 
-     * Terminology:
-     * Layering is a set of layers, each containing a set of vertices.
-     * Ranking is a set of vertices, each with assigned layer/rank.
-     * The terms layer and rank are interchangable.
-     * 
      * @param g the graph whose vertices are to be assigned to layers
-     * @return resulting ranking
+     * @return resulting hierarchy, only the ranking of nodes is defined, layers are undefined
      */
     hierarchy initialize_ranking(detail::subgraph& g) {
         hierarchy h(g, -1);
@@ -353,7 +348,7 @@ fail: ;
 
         while(finished < g.size()) {
             // in the underlying undirected graph find the shortest edge (u, v) 
-            // with u already in the tree and v not in thte tree
+            // with u already in the tree and v not in the tree
             edge e = { 0, 0 };
             int min_span = std::numeric_limits<int>::max();
             for (auto u : g.vertices()) {
