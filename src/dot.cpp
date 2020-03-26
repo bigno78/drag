@@ -53,8 +53,8 @@ int main() {
                 .build();*/
 
     graph g;
-    //auto labels = parse("../../input_graphs_dot/g.11.20.dot", g); 
-    auto labels = parse("data/uniform_n20_e32_i1.gv", g);
+    //auto labels = parse("../../input_graphs_dot/g.11.20.gv", g); 
+    auto labels = parse("data/disconnected.gv", g);
 
 #if defined(CONTROL_CROSSING)
 

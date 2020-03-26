@@ -44,7 +44,7 @@ public:
         vec2 start = { defaults::margin, defaults::margin };
         for (auto& g : subgraphs) {
             vec2 dim = process_subgraph(g, start);
-            start.x += dim.x;
+            start.x += dim.x + attr.node_dist;
             size.x += dim.x;
             size.y = std::max(size.y, dim.y);
         }

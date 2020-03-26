@@ -120,7 +120,7 @@ std::vector< long_edge > add_dummy_nodes(hierarchy& h) {
 
 
 /**
- * Interface for an algorithm which createch a hierarchy for a given graph.
+ * Interface for an algorithm which constructs a hierarchy for a given graph.
  */
 struct layering {
     virtual hierarchy run(detail::subgraph&) = 0;
@@ -175,7 +175,7 @@ struct tight_tree {
     }
 
     void remove_child(vertex_t parent, vertex_t child) {
-        nodes[parent].children.erase(std::find(nodes[parent].children.begin(), nodes[parent].children.end(), child));
+        unlink_child(parent, child);
         nodes[child].parent = -1;
     }
 
