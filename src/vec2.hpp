@@ -18,7 +18,27 @@ inline std::ostream& operator<<(std::ostream& out, vec2 v) {
 }
 
 inline vec2 operator+(vec2 lhs, vec2 rhs) { return { lhs.x + rhs.x, lhs.y + rhs.y }; }
+inline vec2 operator+(float a, vec2 rhs) { return { a + rhs.x, a + rhs.y }; }
+inline vec2 operator+(vec2 lhs, float a) { return { lhs.x + a, lhs.y + a }; }
+inline vec2& operator+=(vec2& lhs, vec2 rhs) {
+    lhs = lhs + rhs;
+    return lhs;
+}
+inline vec2& operator+=(vec2& lhs, float a) {
+    lhs = lhs + a;
+    return lhs;
+}
 inline vec2 operator-(vec2 lhs, vec2 rhs) { return { lhs.x - rhs.x, lhs.y - rhs.y }; }
+inline vec2 operator-(float a, vec2 rhs) { return { a - rhs.x, a - rhs.y }; }
+inline vec2 operator-(vec2 lhs, float a) { return { lhs.x - a, lhs.y - a }; }
+inline vec2& operator-=(vec2& lhs, vec2 rhs) {
+    lhs = lhs - rhs;
+    return lhs;
+}
+inline vec2& operator-=(vec2& lhs, float a) {
+    lhs = lhs - a;
+    return lhs;
+}
 inline float to_radians(float deg) { return (M_PI*deg)/180; }
 inline float magnitude(vec2 v) { return std::sqrt(v.x*v.x + v.y*v.y); }
 inline vec2 normalized(vec2 v) { return { v.x/magnitude(v), v.y/magnitude(v) }; }
