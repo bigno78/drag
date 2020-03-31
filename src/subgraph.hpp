@@ -148,7 +148,14 @@ struct vertex_map {
     vertex_map(const graph& g, T val) : data(g.size(), val) {}
 
     vertex_map(const subgraph& g) : vertex_map(g, T{}) {}
-    vertex_map(const subgraph& g, T val) { resize(g, val); }
+    vertex_map(const subgraph& g, T val) {
+        for (auto u : g.vertices()) {
+            if (u >= data.size()) {
+                data.resize(u + 1);
+            }
+            data[u] = val;
+        }
+    }
 
     void resize(const graph& g) { data.resize(g.size()); }
     void resize(const graph& g, T val) { data.resize(g.size(), val); }
@@ -157,8 +164,8 @@ struct vertex_map {
         for (auto u : g.vertices()) {
             if (u >= data.size()) {
                 data.resize(u + 1);
+                data[u] = val;
             }
-            data[u] = val;
         }
     }
 
