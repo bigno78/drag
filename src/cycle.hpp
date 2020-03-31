@@ -14,6 +14,7 @@ namespace detail {
 struct rev_edges {
     std::vector<edge> reversed;   /**< The edges that were reversed. */
     std::vector<edge> collapsed;  /**< Reversed edges which resulted in a duplicated edge and thus were collapsed */
+    std::vector<vertex_t> loops;
 };
 
 
@@ -60,6 +61,10 @@ public:
             e = reversed(e);
         }
 
+        for (auto u : reversed_edges.loops) {
+            g.remove_edge(u, u);
+        }
+
         return reversed_edges;
     }
 
@@ -67,9 +72,12 @@ private:
     void dfs(subgraph& g, vertex_map<state>& marks, vertex_t u, rev_edges& reversed_edges) {
         marks[u] = state::in_progress;
         for (auto v : g.out_neighbours(u)) {
-            if (marks[v] == state::in_progress) { // there is a cycle
+            if (u == v) {
+                std::cout << "leep\n";
+                reversed_edges.loops.push_back(u);
+            } else if (marks[v] == state::in_progress) { // there is a cycle
                 // Yes, I know. It should be saved as (v, u). But at this point I am just saving edges
-                // to be reversed later. When that happens the ordered will be switched.
+                // to be reversed later. When that happens the order will be switched.
                 if (g.has_edge(v, u))
                     reversed_edges.collapsed.push_back( { u, v } );
                 else

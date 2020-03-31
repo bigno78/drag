@@ -20,6 +20,9 @@ class sugiyama_layout {
     graph& g;
     unsigned original_size;
 
+    detail::vertex_map<detail::bounding_box> boxes;
+    float loop_size = defaults::loop_size;
+
     // the final positions of vertices and control points of edges
     std::vector< node > nodes;
     std::vector< std::vector<vec2> > paths;
@@ -29,10 +32,14 @@ class sugiyama_layout {
     detail::positioning_attributes attr { defaults::node_dist, defaults::layer_dist };
 
     // algorithms for individual steps of sugiyama framework
-    std::unique_ptr< detail::cycle_removal > cycle_rem =     std::make_unique< detail::dfs_removal >();
-    std::unique_ptr< detail::layering > layering =           std::make_unique< detail::network_simplex_layering >(g);
-    std::unique_ptr< detail::crossing_reduction > crossing = std::make_unique< detail::barycentric_heuristic >();
-    std::unique_ptr< detail::positioning > positioning =     std::make_unique< detail::fast_and_simple_positioning >(attr, nodes, g);
+    std::unique_ptr< detail::cycle_removal > cycle_rem =     
+                        std::make_unique< detail::dfs_removal >();
+    std::unique_ptr< detail::layering > layering =
+                        std::make_unique< detail::network_simplex_layering >(g);
+    std::unique_ptr< detail::crossing_reduction > crossing = 
+                        std::make_unique< detail::barycentric_heuristic >();
+    std::unique_ptr< detail::positioning > positioning = 
+                        std::make_unique< detail::fast_and_simple_positioning >(attr, nodes, boxes, g);
 
 public:
     sugiyama_layout(graph& g) : g(g), original_size(g.size()) {}
@@ -100,7 +107,11 @@ private:
 
         // resize the nodes to make space for new dummy nodes
         nodes.resize(this->g.size());
-        vec2 dimensions = positioning->run(g, h, start);
+        boxes.resize(g);
+        for (auto u : reversed_edges.loops) {
+            boxes[u].size.x += loop_size;
+        }
+        vec2 dimensions = positioning->run(h, start);
 
         // restore the reversed edges
         for (auto e : reversed_edges.reversed) {
@@ -110,17 +121,21 @@ private:
             reverse_path(e, g, false);
         }
 
-        construct_paths(g);
+        construct_paths(g, reversed_edges.loops);
 
         return dimensions;
     }
 
+
     void init_nodes() {
         nodes.resize( g.size() );
+        boxes.resize( g );
         for ( auto u : g.vertices() ) {
             nodes[u].u = u;
             nodes[u].default_label = std::to_string(u);
             nodes[u].size = g.node_size(u);
+            boxes[u] = { { 2*nodes[u].size, 2*nodes[u].size },
+                         { nodes[u].size, nodes[u].size } };
         }
     }
 
@@ -144,7 +159,7 @@ private:
         }
     }
 
-    void construct_paths(const detail::subgraph& g) {
+    void construct_paths(const detail::subgraph& g, const std::vector<vertex_t>& loops) {
         for (auto u : g.vertices()) {
             for (auto v : g.out_neighbours(u)) {
                 paths.emplace_back();
@@ -159,6 +174,18 @@ private:
                 }
                 path.push_back( endpoint( prev, v ) );
             }
+        }
+
+        for (auto u : loops) {
+            paths.emplace_back(5);
+            auto& path = paths.back();
+
+            path[1] = nodes[u].pos + vec2{ nodes[u].size + loop_size/2, nodes[u].size };
+            path[2] = nodes[u].pos + vec2{ nodes[u].size + loop_size, 0 };
+            path[3] = nodes[u].pos + vec2{ nodes[u].size + loop_size/2, -nodes[u].size };
+
+            path[0] = endpoint( nodes[u].pos, nodes[u].size, path[1] - nodes[u].pos );
+            path[4] = endpoint( nodes[u].pos, nodes[u].size, path[3] - nodes[u].pos );
         }
     }
 
@@ -191,5 +218,9 @@ private:
     vec2 endpoint(vertex_t u, vertex_t v) {
         vec2 dir = nodes[u].pos - nodes[v].pos;
         return nodes[v].pos + nodes[v].size * normalized(dir);
+    }
+
+    vec2 endpoint(vec2 center, float r, vec2 dir) {
+        return center + r * normalized(dir);
     }
 };

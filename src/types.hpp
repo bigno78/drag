@@ -18,4 +18,5 @@ namespace defaults {
     const float layer_dist = 100;
     const float node_dist = 20;
     const float node_size = 25;
+    const float loop_size = 30;
 }

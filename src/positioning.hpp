@@ -29,7 +29,7 @@ struct positioning_attributes {
  * The y coordinates of nodes on the same layer have to be the same.
  */
 struct positioning {
-    virtual vec2 run(const subgraph& g, const hierarchy& h, vec2 origin) = 0;
+    virtual vec2 run(const hierarchy& h, vec2 origin) = 0;
     virtual ~positioning() = default;
 };
 
@@ -45,16 +45,16 @@ struct test_positioning : public positioning {
         : nodes(nodes)
         , attr(std::move(attr)) {}  
 
-    vec2 run(const subgraph& g, const hierarchy& h, vec2 origin) override {
+    vec2 run(const hierarchy& h, vec2 origin) override {
         float y = origin.y + attr.layer_dist;
         float width = 0;
         for (auto layer : h.layers) {
             float x = origin.x;
             for (auto u : layer) {
-                x += attr.node_dist + g.node_size(u);
+                x += attr.node_dist + h.g.node_size(u);
                 nodes[u].pos = { x, y };
-                nodes[u].size = g.node_size(u);
-                x += g.node_size(u);
+                nodes[u].size = h.g.node_size(u);
+                x += h.g.node_size(u);
             }
             if ((x - origin.x) > width) {
                 width = x;
@@ -81,11 +81,21 @@ struct edge_set {
     }
 };
 
+/**
+ * Bounding box of a vertex.
+ * The center is relative to upper left corner.
+ */
+struct bounding_box {
+    vec2 size = { 0, 0 };
+    vec2 center = { 0, 0 }; 
+};
+
 
 class fast_and_simple_positioning : public positioning {
 public:
     std::vector<node>& nodes;
     positioning_attributes attr;
+    const vertex_map<bounding_box>& boxes;
 
     vertex_map< std::pair<vertex_t, vertex_t> > upper_medians;
     vertex_map< std::pair<vertex_t, vertex_t> > lower_medians;
@@ -107,9 +117,13 @@ public:
     edge_set conflicting;
 
 
-    fast_and_simple_positioning(positioning_attributes attr, std::vector<node>& nodes, const graph& g)
+    fast_and_simple_positioning(positioning_attributes attr, 
+                                std::vector<node>& nodes,
+                                const vertex_map<bounding_box>& boxes, 
+                                const graph& g)
         : nodes(nodes)
         , attr(std::move(attr))
+        , boxes(boxes)
         , upper_medians(g)
         , lower_medians(g)
         , pos(g) 
@@ -141,8 +155,8 @@ public:
             int i = 0;
             for (auto u : layer) {
                 pos[u] = i++;
-                if (nodes[u].size > layer_size[u]) {
-                    layer_size[u] = nodes[u].size;
+                if (boxes[u].size.y > layer_size[u]) {
+                    layer_size[u] = boxes[u].size.y;
                 }
             }
         }
@@ -153,7 +167,7 @@ public:
         }
     }
 
-    vec2 run(const subgraph& g, const hierarchy& h, vec2 origin) override {
+    vec2 run(const hierarchy& h, vec2 origin) override {
         init(h);
         init_medians(h);
 
@@ -286,11 +300,11 @@ public:
     float normalize(const hierarchy& h, float start) {
         float min = 0, max = 0;
         for(auto u : h.g.vertices()) {
-            if (nodes[u].pos.x + nodes[u].size > max) {
-                max = nodes[u].pos.x + nodes[u].size;
+            if (nodes[u].pos.x + boxes[u].size.x - boxes[u].center.x > max) {
+                max = nodes[u].pos.x + boxes[u].size.x - boxes[u].center.x;
             }
-            if (nodes[u].pos.x - nodes[u].size < min) {
-                min = nodes[u].pos.x - nodes[u].size;
+            if (nodes[u].pos.x - boxes[u].center.x < min) {
+                min = nodes[u].pos.x - boxes[u].center.x;
             }
         }
 
@@ -455,7 +469,7 @@ public:
                     sink[u] = sink[rv];
 
                 if (sink[u] != sink[rv]) {
-                    float new_shift = *x[u] - *x[rv] - node_dist(w, v);
+                    float new_shift = *x[u] - *x[rv] - (left(type) ? node_dist(v, w) : node_dist(w, v));
                     if (!shift[ sink[rv] ]) {
                         shift[ sink[rv] ] = new_shift;
                     } else {
@@ -463,9 +477,9 @@ public:
                                                        : std::max(*shift[ sink[rv] ], new_shift);
                     }
                 } else {
-                    float new_x = *x[rv] - d*node_dist(w, v);
+                    float new_x = *x[rv] - d*(left(type) ? node_dist(v, w) : node_dist(w, v));
                     x[u] = !left(type) ? std::min(*x[u], new_x)
-                                      : std::max(*x[u], new_x);
+                                       : std::max(*x[u], new_x);
                 }
             }
             w = align[w];
@@ -483,7 +497,13 @@ public:
     }
 
     float node_dist(vertex_t u, vertex_t v) {
-        return nodes[u].size + nodes[v].size + attr.node_dist;
+        std::cout << u << boxes[u].size << boxes[u].center << " -> " << v << boxes[v].size << boxes[v].center;
+        std::cout << ": " << boxes[u].size.x - boxes[u].center.x +
+               boxes[v].center.x + 
+               attr.node_dist << "\n";
+        return boxes[u].size.x - boxes[u].center.x +
+               boxes[v].center.x + 
+               attr.node_dist;
     }
 
     // Get the range of indexes.
@@ -494,7 +514,7 @@ public:
         return { 0, static_cast<int>(size), 1 };
     }
 
-    // Is i one of the last index in the interval <0, size - 1>?
+    // Is i one of the endpoints of the interval <0, size - 1>?
     bool is_last_idx(int i, std::size_t size, bool desc) const {
         return (desc && i == size - 1) || (!desc && i == 0);
     }
