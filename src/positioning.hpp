@@ -112,7 +112,7 @@ public:
 
     vertex_map<int> pos;
 
-    vertex_map<float> layer_size;
+    std::vector<float> layer_size;
 
     edge_set conflicting;
 
@@ -138,7 +138,6 @@ public:
             shift[i].resize(h.g);
             x[i].resize(h.g);
         }
-        layer_size.resize(h.g, std::numeric_limits<float>::lowest());
 
         for (auto u : h.g.vertices()) {
             for (int j = 0; j < 4; ++j) {
@@ -151,19 +150,21 @@ public:
 
         // init positions on the layers
         pos.resize(h.g);
-        for (const auto& layer : h.layers) {
+        layer_size.clear();
+        layer_size.resize(h.layers.size(), std::numeric_limits<float>::lowest());
+        for (int l = 0; l < h.layers.size(); ++l) {
             int i = 0;
-            for (auto u : layer) {
+            for (auto u : h.layers[l]) {
                 pos[u] = i++;
-                if (boxes[u].size.y > layer_size[u]) {
-                    layer_size[u] = boxes[u].size.y;
+                if (boxes[u].size.y > layer_size[l]) {
+                    layer_size[l] = boxes[u].size.y;
                 }
             }
         }
 
         for (int i = 0; i < 4; ++i) {
-            min[i] = std::numeric_limits<float>::lowest();
-            max[i] = std::numeric_limits<float>::max();
+            min[i] = std::numeric_limits<float>::max();
+            max[i] = std::numeric_limits<float>::lowest();
         }
     }
 
@@ -182,15 +183,42 @@ public:
         }*/
 
 #ifdef DEBUG_COORDINATE
-        std::cout << "TYPE: " << produce_layout << "\n";
-        if (produce_layout < 4) {
+        
+        //if (produce_layout < 4) {
             /*for (auto u : h.g.vertices()) {
                 std::cout << u << "[" << medians[produce_layout][u] << "][" 
                           << medians[invert_horizontal(static_cast<orient>(produce_layout))][u] << "]\n";
             }*/
-            vertical_align(h, static_cast<orient>(produce_layout));
+            //vertical_align(h, static_cast<orient>(produce_layout));*/
 
-            /*for (auto u : h.g.vertices()) {
+            
+/*
+            horizontal_compaction(h, static_cast<orient>(produce_layout));
+
+            float y = origin.y;
+            for (int l = 0; l < h.size(); ++l) {
+                y += layer_size[l];
+                for (auto u : h.layers[l]) {
+                    nodes[u].pos = vec2{ *x[produce_layout][u], y };
+                    nodes[u].size = h.g.node_size(u);
+                }
+                y += layer_size[l] + attr.layer_dist;
+            }
+            float width = normalize(h, origin.x);
+
+            return { width, y };
+        }*/
+#endif
+
+        for (int i = 0; i < 4; ++i) {
+            vertical_align(h, static_cast<orient>(i));
+            horizontal_compaction(h, static_cast<orient>(i));
+        }
+
+#ifdef DEBUG_COORDINATE
+        if(produce_layout < 4) {
+            std::cout << "TYPE: " << produce_layout << "\n";
+            for (auto u : h.g.vertices()) {
                 if (root[produce_layout][u] == u) {
                     vertex_t v = u;
                     const char* sep = "";
@@ -202,37 +230,22 @@ public:
                     std::cout << "\n";
                 }
             }
-            std::cout << "\n";*/
-
-            horizontal_compaction(h, static_cast<orient>(produce_layout));
-
-            origin = origin + vec2{ layer_size[0], layer_size[0] };
-            float y = origin.y;
-            for (auto l : h.layers) {
-                for (auto u : l) {
-                    nodes[u].pos = { *x[static_cast<orient>(produce_layout)][u], y };
-                    nodes[u].size = h.g.node_size(u);
-                }
-                y += attr.layer_dist;
-            }
-            float width = normalize(h, origin.x);
-
-            return { width, y };
+            std::cout << "\n";
         }
 #endif
-
-        for (int i = 0; i < 4; ++i) {
-            vertical_align(h, static_cast<orient>(i));
-            horizontal_compaction(h, static_cast<orient>(i));
-        }
 
         // find the layout with smallest width
         orient min_width_layout = static_cast<orient>(0);
         for (int i = 1; i < 4; ++i) {
-            if ( max[min_width_layout] - min[min_width_layout] < max[i] - min[i] ) {
+            if ( max[min_width_layout] - min[min_width_layout] > max[i] - min[i] ) {
                 min_width_layout = static_cast<orient>(i);
             }
         }
+
+#ifdef DEBUG_COORDINATE
+        if (produce_layout < 4)
+            normalize(h, x[min_width_layout], 0);
+#endif
 
         // calculate how much other layouts need to be shifted to align them to the smallest width one
         float shift[4];
@@ -240,28 +253,49 @@ public:
             if ( left(static_cast<orient>(i)) ) {
                 shift[i] = min[min_width_layout] - min[i];
             } else {
-                shift[i] = max[min_width_layout] - max[i];
+                //shift[i] = max[min_width_layout] - max[i];
+                shift[i] = min[min_width_layout] - max[i];
             }
         }
-        
+        std::cout << "min-w: " << min_width_layout << "\n";
+        for (int i = 0; i < 4; ++i) {
+            std::cout << "min: " << min[i] << " max: " << max[i] << " shift: " << shift[i] << "\n";
+        }
+
 
         float y = origin.y;
         std::vector<float> vals;
         for (int l = 0; l < h.size(); ++l) {
             y += layer_size[l];
             for (auto u : h.layers[l]) {
+#ifdef DEBUG_COORDINATE
+                if(produce_layout < 4) {
+                    nodes[u].pos = vec2{ *x[produce_layout][u] + shift[produce_layout], y };
+                } else {
+#endif
+
                 vals = { *x[0][u] + shift[0],
                          *x[1][u] + shift[1],
                          *x[2][u] + shift[2],
                          *x[3][u] + shift[3] };
                 std::sort(vals.begin(), vals.end());
                 nodes[u].pos = { (vals[1] + vals[2])/2, y };
+
+#ifdef DEBUG_COORDINATE
+                }
+#endif
                 nodes[u].size = h.g.node_size(u);
             }
             y += layer_size[l] + attr.layer_dist;
         }
 
-        float width = normalize(h, origin.x);
+        float width;
+#ifdef DEBUG_COORDINATE
+        if (produce_layout < 4) {
+            //return { max[produce_layout] - min[produce_layout], y - attr.layer_dist };
+        }
+#endif
+        width = normalize(h, origin.x);
 
         return { width, y - attr.layer_dist };
     }
@@ -284,14 +318,14 @@ public:
                 x[u] = x[ root[u] ];
                 if ( shift[ sink[ root[u] ] ] ) {
                     x[u] = *x[u] + *shift[ sink[ root[u] ] ];
+                }
 
-                    if (*x[u] > max[dir]) {
-                        max[dir] = *x[u];
-                    }
+                if (*x[u] > max[dir]) {
+                    max[dir] = *x[u];
+                }
 
-                    if (*x[u] < min[dir]) {
-                        min[dir] = *x[u];
-                    }
+                if (*x[u] < min[dir]) {
+                    min[dir] = *x[u];
                 }
             }
         }
@@ -312,6 +346,19 @@ public:
             nodes[u].pos.x = start + nodes[u].pos.x - min;
         }
         return max - min;
+    }
+
+    void normalize(const hierarchy& h, vertex_map< std::optional<float> >& pos, float start) {
+        float min = 0;
+        for(auto u : h.g.vertices()) {
+            if (*pos[u] < min) {
+                min = *pos[u];
+            }
+        }
+
+        for(auto u : h.g.vertices()) {
+            pos[u] = start + *pos[u] - min;
+        }
     }
 
     void init_medians(const hierarchy& h) {
@@ -469,7 +516,7 @@ public:
                     sink[u] = sink[rv];
 
                 if (sink[u] != sink[rv]) {
-                    float new_shift = *x[u] - *x[rv] - (left(type) ? node_dist(v, w) : node_dist(w, v));
+                    float new_shift = *x[u] - *x[rv] + d*(left(type) ? node_dist(v, w) : node_dist(w, v));
                     if (!shift[ sink[rv] ]) {
                         shift[ sink[rv] ] = new_shift;
                     } else {
@@ -497,10 +544,10 @@ public:
     }
 
     float node_dist(vertex_t u, vertex_t v) {
-        std::cout << u << boxes[u].size << boxes[u].center << " -> " << v << boxes[v].size << boxes[v].center;
+        /*std::cout << u << boxes[u].size << boxes[u].center << " -> " << v << boxes[v].size << boxes[v].center;
         std::cout << ": " << boxes[u].size.x - boxes[u].center.x +
                boxes[v].center.x + 
-               attr.node_dist << "\n";
+               attr.node_dist << "\n";*/
         return boxes[u].size.x - boxes[u].center.x +
                boxes[v].center.x + 
                attr.node_dist;
