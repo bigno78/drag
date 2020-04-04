@@ -1,12 +1,28 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.5.0)
 
 project(bakalarka)
 
-SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -g -std=c++17")
+#SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++17")
+
+add_library(debug_options INTERFACE)
+target_compile_options(debug_options INTERFACE -g -std=c++17)
+
+add_library(bench_options INTERFACE)
+target_compile_options(bench_options INTERFACE -O2 -std=c++17)
+
 
 add_executable(dot dot.cpp)
-add_executable(example example.cpp)
+target_link_libraries(dot PRIVATE debug_options)
 
-file(COPY data/ DESTINATION data/)
+add_executable(example example/example.cpp)
+target_link_libraries(example PRIVATE debug_options)
 
-#add_executable(tests test/test-main.cpp test/test-subgraph.cpp test/test-cycle.cpp test/test-layering.cpp)
+add_executable(stat benchmarks/stat.cpp)
+target_link_libraries(stat PRIVATE bench_options)
+
+add_executable(bench benchmarks/bench.cpp)
+target_link_libraries(bench PRIVATE bench_options)
+
+add_executable(draw benchmarks/draw.cpp)
+target_link_libraries(draw PRIVATE debug_options)
+

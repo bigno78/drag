@@ -90,8 +90,7 @@ void draw_to_svg( svg_img& img,
 }
 
 
-void draw_to_svg(svg_img& img, const sugiyama_layout& l, vec2 start = {0,0}) 
-{
+void draw_to_svg(svg_img& img, const sugiyama_layout& l, vec2 start = {0,0}) {
     for (const auto& node : l.vertices()) {
         img.draw_circle(start + node.pos, node.size);
         img.draw_text(start + node.pos, node.default_label );

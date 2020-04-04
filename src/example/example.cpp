@@ -1,7 +1,7 @@
-#include "interface.hpp"
+#include "../interface.hpp"
 
-#include "parser.hpp"
-#include "svg.hpp"
+#include "../parser.hpp"
+#include "../svg.hpp"
 
 int main() {
     /*
@@ -13,7 +13,7 @@ int main() {
     */
 
     graph g;
-    auto labels = parse("data/cyclic.gv", g);
+    auto labels = parse("../data/simple/tree.gv", g);
 
     sugiyama_layout l(g);
     l.build();

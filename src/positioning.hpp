@@ -182,34 +182,6 @@ public:
             }
         }*/
 
-#ifdef DEBUG_COORDINATE
-        
-        //if (produce_layout < 4) {
-            /*for (auto u : h.g.vertices()) {
-                std::cout << u << "[" << medians[produce_layout][u] << "][" 
-                          << medians[invert_horizontal(static_cast<orient>(produce_layout))][u] << "]\n";
-            }*/
-            //vertical_align(h, static_cast<orient>(produce_layout));*/
-
-            
-/*
-            horizontal_compaction(h, static_cast<orient>(produce_layout));
-
-            float y = origin.y;
-            for (int l = 0; l < h.size(); ++l) {
-                y += layer_size[l];
-                for (auto u : h.layers[l]) {
-                    nodes[u].pos = vec2{ *x[produce_layout][u], y };
-                    nodes[u].size = h.g.node_size(u);
-                }
-                y += layer_size[l] + attr.layer_dist;
-            }
-            float width = normalize(h, origin.x);
-
-            return { width, y };
-        }*/
-#endif
-
         for (int i = 0; i < 4; ++i) {
             vertical_align(h, static_cast<orient>(i));
             horizontal_compaction(h, static_cast<orient>(i));
@@ -257,10 +229,10 @@ public:
                 shift[i] = min[min_width_layout] - max[i];
             }
         }
-        std::cout << "min-w: " << min_width_layout << "\n";
+        /*std::cout << "min-w: " << min_width_layout << "\n";
         for (int i = 0; i < 4; ++i) {
             std::cout << "min: " << min[i] << " max: " << max[i] << " shift: " << shift[i] << "\n";
-        }
+        }*/
 
 
         float y = origin.y;

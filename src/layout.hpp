@@ -224,3 +224,4 @@ private:
         return center + r * normalized(dir);
     }
 };
+

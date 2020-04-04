@@ -46,15 +46,15 @@ int main() {
                 .add_edge(1, 2).add_edge(2, 3).add_edge(3, 4)
                 .add_edge(5, 7).add_edge(6, 7).add_edge(7, 4)
                 .build();*/
-    /*graph g = graph_builder()
-                .add_edge(0, 2).add_edge(0, 3).add_edge(1, 3).add_edge(1, 4)
-                .add_edge(4, 6).add_edge(5, 7).add_edge(6, 7)
-                .add_edge(6, 8)
-                .build();*/
+    graph g = graph_builder()
+                .add_edge(0, 6).add_edge(2, 6).add_edge(3, 6).add_edge(6, 7)
+                .add_edge(7, 9).add_edge(4, 5).add_edge(5, 9)
+                .add_edge(1, 8).add_edge(8, 9)
+                .build();
 
-    graph g;
+    //graph g;
     //auto labels = parse("../../input_graphs_dot/g.11.20.gv", g); 
-    auto labels = parse("data/disconnected.gv", g);
+    //auto labels = parse("data/disconnected.gv", g);
 
 #if defined(CONTROL_CROSSING)
 
@@ -81,7 +81,7 @@ int main() {
         produce_layout = i;
         sugiyama_layout layout(gr);
         layout.build();
-        draw_to_svg(img, layout, start);
+        draw_to_svg(img, layout);
     }
     svg_img img{ "coord-final.svg" };
     produce_layout = 4;
@@ -94,7 +94,7 @@ int main() {
     svg_img img{ "debug.svg" };
     sugiyama_layout layout(g);
     layout.build();
-    draw_to_svg(img, layout, labels);
+    draw_to_svg(img, layout/*, labels*/);
 
 #else
 

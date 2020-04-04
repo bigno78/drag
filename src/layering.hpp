@@ -29,7 +29,7 @@ struct hierarchy {
      */
     int span(vertex_t u, vertex_t v) const { return ranking[v] - ranking[u]; }
 
-    unsigned size() const { return layers.size(); }
+    int size() const { return layers.size(); }
 
     std::vector<vertex_t>& layer(vertex_t u) { return layers[ranking[u]]; }
     const std::vector<vertex_t>& layer(vertex_t u) const { return layers[ranking[u]]; }
