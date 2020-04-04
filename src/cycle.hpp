@@ -73,7 +73,6 @@ private:
         marks[u] = state::in_progress;
         for (auto v : g.out_neighbours(u)) {
             if (u == v) {
-                std::cout << "leep\n";
                 reversed_edges.loops.push_back(u);
             } else if (marks[v] == state::in_progress) { // there is a cycle
                 // Yes, I know. It should be saved as (v, u). But at this point I am just saving edges
