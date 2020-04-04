@@ -19,4 +19,8 @@ namespace defaults {
     const float node_dist = 20;
     const float node_size = 25;
     const float loop_size = 30;
+
+    inline int iters = 1;
+    inline int forgv = 4;
+    inline bool trans = false;
 }
