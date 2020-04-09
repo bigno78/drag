@@ -2,8 +2,8 @@
 
 #include <vector>
 #include <iostream>
+#include <ostream>
 #include <algorithm>
-#include <map>
 
 #include "utils.hpp"
 #include "types.hpp"
@@ -14,10 +14,10 @@ class graph {
     std::vector< std::vector<vertex_t> > m_in_neighbours;
     std::vector< float > m_node_size;
 
-    float default_radius = defaults::node_size;
+    float m_default_radius = defaults::node_size;
 
 public:
-    vertex_t add_node() { return add_node(default_radius); }
+    vertex_t add_node() { return add_node(m_default_radius); }
     vertex_t add_node(float radius) {
         m_out_neighbours.emplace_back();
         m_in_neighbours.emplace_back();
@@ -25,18 +25,22 @@ public:
         return m_node_size.size() - 1;
     }
 
-    void add_edge(vertex_t tail, vertex_t head) { 
-        m_out_neighbours[tail].push_back(head);
-        m_in_neighbours[head].push_back(tail); 
+    graph& add_edge(vertex_t from, vertex_t to) { 
+        m_out_neighbours[from].push_back(to);
+        m_in_neighbours[to].push_back(from);
+        return *this;
     }
 
-    void remove_edge(vertex_t tail, vertex_t head) {
-        remove_neighour(m_out_neighbours[tail], head);
-        remove_neighour(m_in_neighbours[head], tail);
+    void remove_edge(vertex_t from, vertex_t to) {
+        remove_neighour(m_out_neighbours[from], to);
+        remove_neighour(m_in_neighbours[to], from);
     }
 
     float node_size(vertex_t u) const { return m_node_size[u]; }
+    void node_size(vertex_t u, float r) { m_node_size[u] = r; }
 
+    void default_size(float r) { m_default_radius = r; }
+    float default_size() const { return m_default_radius; }
 
     unsigned size() const { return m_node_size.size(); }
 
@@ -44,7 +48,23 @@ public:
     const std::vector<vertex_t>& in_neighbours(vertex_t u) const { return m_in_neighbours[u]; }
     range<vertex_t> vertices() const { return range<vertex_t>(0, size(), 1); }
 
+    friend std::ostream& operator<<(std::ostream& out, const graph& g) {
+        for (auto u : g.vertices()) {
+            out << u << "(" << g.node_size(u) << "): [";
+
+            const char* sep = "";
+            for (auto v : g.out_neighbours(u)) {
+                out << sep << v;
+                sep = ", ";
+            }
+
+            out << "]\n";
+        }
+        return out;
+    }
+
 private:
+
     void remove_neighour(std::vector<vertex_t>& neighbours, vertex_t u) {
         auto it = std::find(neighbours.begin(), neighbours.end(), u);
         if (it != neighbours.end()) {
