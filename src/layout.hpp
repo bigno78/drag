@@ -10,6 +10,7 @@
 #include "layering.hpp"
 #include "positioning.hpp"
 #include "crossing.hpp"
+#include "router.hpp"
 
 #ifdef CONTROL_CROSSING
 bool crossing_enabled = true;
@@ -26,6 +27,7 @@ class sugiyama_layout {
     // the final positions of vertices and control points of edges
     std::vector< node > nodes;
     std::vector< std::vector<vec2> > paths;
+    std::vector< link > links;
     vec2 size = { 0, 0 };
 
     // attributes controling spacing
@@ -40,6 +42,8 @@ class sugiyama_layout {
                         std::make_unique< detail::barycentric_heuristic >();
     std::unique_ptr< detail::positioning > positioning = 
                         std::make_unique< detail::fast_and_simple_positioning >(attr, nodes, boxes, g);
+    std::unique_ptr< detail::edge_router > routing = 
+                        std::make_unique< detail::router >(nodes, links);
 
 public:
     sugiyama_layout(graph& g) : g(g), original_size(g.size()) {}
@@ -74,7 +78,7 @@ public:
      * Returns the control points for all the edges in the graph.
      * Calling this function before build was called is undefined.
      */
-    const std::vector< std::vector<vec2> >& edges() const { return paths; }
+    const std::vector<link>& edges() const { return links; }
 
     float width() const { return size.x; }
     float height() const { return size.y; }
@@ -93,6 +97,7 @@ private:
         }*/
 
         detail::hierarchy h = layering->run(g);
+        //std::cout << h << "\n";
 
         auto long_edges = add_dummy_nodes(h);
         update_reversed_edges(reversed_edges, long_edges);
@@ -120,8 +125,12 @@ private:
         for (auto e : reversed_edges.collapsed) {
             reverse_path(e, g, false);
         }
+        for (auto u : reversed_edges.loops) {
+            g.add_edge(u, u);
+        }
 
-        construct_paths(g, reversed_edges.loops);
+        //construct_paths(g, reversed_edges.loops);
+        routing->run(h);
 
         return dimensions;
     }
@@ -150,11 +159,11 @@ private:
         for (const auto& elem : long_edges) {
             auto i = std::find(reversed_edges.reversed.begin(), reversed_edges.reversed.end(), elem.orig);
             if (i != reversed_edges.reversed.end()) {
-                i->head = elem.path[1];
+                i->to = elem.path[1];
             }
             auto j = std::find(reversed_edges.collapsed.begin(), reversed_edges.collapsed.end(), elem.orig);
             if (j != reversed_edges.collapsed.end()) {
-                j->head = elem.path[1];
+                j->to = elem.path[1];
             }
         }
     }
@@ -193,8 +202,8 @@ private:
      * Reverses the long edge which begins with edge e.
      */
     void reverse_path(detail::edge e, detail::subgraph& g, bool remove = true) {
-        vertex_t u = e.tail;
-        vertex_t v = e.head;
+        vertex_t u = e.from;
+        vertex_t v = e.to;
         
         while (g.is_dummy(v)) {
             vertex_t next = *g.out_neighbours(v).begin();
@@ -207,9 +216,9 @@ private:
 
     void reverse_edge(detail::edge e, bool remove = true) {
         if (remove) {
-            g.remove_edge(e.tail, e.head);
+            g.remove_edge(e.from, e.to);
         }
-        g.add_edge(e.head, e.tail);
+        g.add_edge(e.to, e.from);
     }
 
     /**

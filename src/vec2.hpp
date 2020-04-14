@@ -40,6 +40,7 @@ inline vec2& operator-=(vec2& lhs, float a) {
     return lhs;
 }
 inline float to_radians(float deg) { return (M_PI*deg)/180; }
+inline float to_degrees(float rad) { return (180*rad)/M_PI; }
 inline float magnitude(vec2 v) { return std::sqrt(v.x*v.x + v.y*v.y); }
 inline vec2 normalized(vec2 v) { return { v.x/magnitude(v), v.y/magnitude(v) }; }
 
