@@ -65,7 +65,7 @@ public:
 void draw_arrow(svg_img& img, vec2 from, vec2 to, float size) {
     vec2 dir = from - to;
     dir = normalized(dir);
-    img.draw_polygon( { to, to + size * rotate(dir, 45), to + size * rotate(dir, -45) } );
+    img.draw_polygon( { to, to + size * rotate(dir, 25), to + size * rotate(dir, -25) } );
 }
 
 
@@ -80,12 +80,12 @@ void draw_to_svg( svg_img& img,
     }
 
     for (const auto& e : l.edges()) {
-        vec2 prev = *e.begin();
-        for (auto pos : e) {
+        vec2 prev = *e.points.begin();
+        for (auto pos : e.points) {
             img.draw_line(start + prev, start + pos);
             prev = pos;
         }
-        draw_arrow(img, start + e[e.size() - 2], start + e.back(), 10);
+        draw_arrow(img, start + e.points[e.points.size() - 2], start + e.points.back(), 10);
     }
 }
 
@@ -97,11 +97,11 @@ void draw_to_svg(svg_img& img, const sugiyama_layout& l, vec2 start = {0,0}) {
     }
 
     for (const auto& e : l.edges()) {
-        vec2 prev = *e.begin();
-        for (auto pos : e) {
+        vec2 prev = *e.points.begin();
+        for (auto pos : e.points) {
             img.draw_line(start + prev, start + pos);
             prev = pos;
         }
-        draw_arrow(img, start + e[e.size() - 2], start + e.back(), 5);
+        draw_arrow(img, start + e.points[e.points.size() - 2], start + e.points.back(), 5);
     }
 }
