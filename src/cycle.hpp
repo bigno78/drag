@@ -9,12 +9,12 @@ namespace detail {
 /**
  * Holds the edges that were reversed to remove cycles.
  * This struct contains the edges in their reversed form
- * i.e. if edge (u, v) cuased a cycle, it would be saved as (v, u)
+ * i.e. if edge (u, v) cuased a cycle, it is saved as (v, u)
  */
 struct rev_edges {
     std::vector<edge> reversed;   /**< The edges that were reversed. */
     std::vector<edge> collapsed;  /**< Reversed edges which resulted in a duplicated edge and thus were collapsed */
-    std::vector<vertex_t> loops;
+    std::vector<vertex_t> loops;  /**< Loops */
 };
 
 
@@ -44,6 +44,8 @@ public:
     rev_edges run(subgraph& g) override {
         vertex_map<state> marks(g, state::unvisited);
         rev_edges reversed_edges;
+
+        // find cycles
         for (auto u : g.vertices()) {
             if (marks[u] == state::unvisited) {
                 dfs(g, marks, u, reversed_edges);

@@ -1,6 +1,7 @@
 #pragma once
 
-#include<string>
+#include <string>
+#include <vector>
 
 #include "vec2.hpp"
 
@@ -13,6 +14,11 @@ struct node {
     std::string default_label;
 };
 
+struct link {
+    vertex_t from, to;
+    std::vector< vec2 > points;
+};
+
 namespace defaults {
     const float margin = 10;
     const float layer_dist = 60;
@@ -22,5 +28,5 @@ namespace defaults {
 
     inline int iters = 1;
     inline int forgv = 4;
-    inline bool trans = false;
+    inline bool trans = true;
 }

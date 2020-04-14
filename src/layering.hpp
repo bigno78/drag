@@ -42,15 +42,29 @@ struct hierarchy {
             }
         }
     }
+
+    vertex_t next(vertex_t u) const { return layers[ ranking[u] ][ pos[u] + 1 ]; }
+    vertex_t prev(vertex_t u) const { return layers[ ranking[u] ][ pos[u] - 1 ]; }
+
+    bool has_next(vertex_t u) const { return pos[u] < layer(u).size() - 1; }
+    bool has_prev(vertex_t u) const { return pos[u] > 0; }
 };
 
 std::ostream& operator<<(std::ostream& out, const hierarchy& h) {
-    out << "ranking: [";
+    /*out << "ranking: [";
     for (auto u : h.g.vertices()) {
         out << u << "(" << h.ranking[u] << "), ";    
     }
     out << "]\n";
     for (const auto& l : h.layers) {
+        for (auto u : l) {
+            out << u << " ";
+        }
+        out << "\n";
+    }
+    return out;*/
+
+    for (auto& l : h.layers) {
         for (auto u : l) {
             out << u << " ";
         }
@@ -93,10 +107,10 @@ std::vector< long_edge > add_dummy_nodes(hierarchy& h) {
 
     // split the found edges
     for (auto& [ orig, path ] : split_edges) {
-        int span = h.span(orig.tail, orig.head);
-        path.push_back(orig.tail);
+        int span = h.span(orig.from, orig.to);
+        path.push_back(orig.from);
 
-        vertex_t s = orig.tail;
+        vertex_t s = orig.from;
         for (int i = 0; i < span - 1; ++i) {
             vertex_t t = h.g.add_dummy();
 
@@ -110,8 +124,8 @@ std::vector< long_edge > add_dummy_nodes(hierarchy& h) {
 
             s = t;
         }
-        path.push_back(orig.head);
-        h.g.add_edge(s, orig.head);
+        path.push_back(orig.to);
+        h.g.add_edge(s, orig.to);
         h.g.remove_edge(orig);
     }
 
@@ -184,10 +198,10 @@ struct tight_tree {
     }
 
     vertex_t component(edge e, vertex_t u) {
-        if (nodes[e.head].min > nodes[u].min || nodes[e.head].order < nodes[u].order) {
-            return e.tail;
+        if (nodes[e.to].min > nodes[u].min || nodes[e.to].order < nodes[u].order) {
+            return e.from;
         }
-        return e.head;
+        return e.to;
     }
 
     int dir(const hierarchy& h, vertex_t u, vertex_t v) {
@@ -371,9 +385,9 @@ fail: ;
                     h.ranking[u] += min_span;
                 }
             }
-            tree.add_child(e.tail, e.head);
-            tree.node(e.head).dir = dir;
-            done.set(e.head, true);
+            tree.add_child(e.from, e.to);
+            tree.node(e.to).dir = dir;
+            done.set(e.to, true);
             ++finished;
         }
     }

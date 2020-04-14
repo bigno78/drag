@@ -69,12 +69,12 @@ struct test_positioning : public positioning {
 struct edge_set {
     vertex_map< std::vector<vertex_t> > data;
 
-    bool contains(edge e) const { return contains(e.tail, e.head); }
+    bool contains(edge e) const { return contains(e.from, e.to); }
     bool contains(vertex_t u, vertex_t v) const { 
         return data.contains(u) && std::find(data[u].begin(), data[u].end(), v) != data[u].end();
     }
 
-    void insert(edge e) { insert(e.tail, e.head); }
+    void insert(edge e) { insert(e.from, e.to); }
     void insert(vertex_t u, vertex_t v) {
         data.add_vertex(u);
         data[u].push_back(v);

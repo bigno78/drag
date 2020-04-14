@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <map>
 
 #include "utils.hpp"
 #include "interface.hpp"
@@ -9,18 +10,22 @@
 
 namespace detail {
 
+// ----------------------------------------------------------------------------------------------
+// --------------------------------------  SUBGRAPH  --------------------------------------------
+// ----------------------------------------------------------------------------------------------
+
 
 struct edge {
-    vertex_t tail, head;
+    vertex_t from, to;
 };
 
-inline bool operator==(edge lhs, edge rhs) { return lhs.head == rhs.head && lhs.tail == rhs.tail; }
+inline bool operator==(edge lhs, edge rhs) { return lhs.to == rhs.to && lhs.from == rhs.from; }
 inline bool operator!=(edge lhs, edge rhs) { return !(lhs == rhs); }
 
-inline edge reversed(edge e) { return {e.head, e.tail}; }
+inline edge reversed(edge e) { return {e.to, e.from}; }
 
 inline std::ostream& operator<<(std::ostream& out, edge e) {
-    out << "(" << e.tail << ", " << e.head << ")";
+    out << "(" << e.from << ", " << e.to << ")";
     return out;
 }
 
@@ -46,27 +51,28 @@ public:
 
     unsigned size() const { return m_vertices.size(); }
 
-    void add_edge(edge e) { m_source.add_edge(e.tail, e.head); }
+    void add_edge(edge e) { m_source.add_edge(e.from, e.to); }
     void add_edge(vertex_t u, vertex_t v) { add_edge( { u, v } ); }
 
-    vertex_t add_dummy() { 
-        auto u = m_source.add_node(0);
+    vertex_t add_dummy(float size) { 
+        auto u = m_source.add_node(size);
         m_vertices.push_back(u);
         return u;
     }
+    vertex_t add_dummy() { return add_dummy(0); }
 
     bool is_dummy(vertex_t u) const { return u > m_dummy_border; }
 
-    void remove_edge(edge e) { m_source.remove_edge(e.tail, e.head); }
+    void remove_edge(edge e) { m_source.remove_edge(e.from, e.to); }
     void remove_edge(vertex_t u, vertex_t v) { remove_edge( { u, v } ); }
 
     float node_size(vertex_t u) const { return m_source.node_size(u); }
 
     bool has_edge(edge e) const { 
-        auto out = out_neighbours(e.tail);
-        return std::find(out.begin(), out.end(), e.head) != out.end();
+        auto out = out_neighbours(e.from);
+        return std::find(out.begin(), out.end(), e.to) != out.end();
     }
-    bool has_edge(vertex_t u, vertex_t v) { return has_edge( { u, v } ); }
+    bool has_edge(vertex_t u, vertex_t v) const { return has_edge( { u, v } ); }
 
     const std::vector<vertex_t>& out_neighbours(vertex_t u) const { return m_source.out_neighbours(u); }
     const std::vector<vertex_t>& in_neighbours(vertex_t u) const { return m_source.in_neighbours(u); }
@@ -92,6 +98,10 @@ inline std::ostream& operator<<(std::ostream& out, const subgraph& g) {
     return out;
 }
 
+
+// ----------------------------------------------------------------------------------------------
+// --------------------------------------  SPLITING  --------------------------------------------
+// ----------------------------------------------------------------------------------------------
 
 /**
  * Recursively assign u and all vertices reachable from u in the underlying undirected graph to the same component.
@@ -135,8 +145,12 @@ inline std::vector<subgraph> split(graph& g) {
 }
 
 
+// ----------------------------------------------------------------------------------------------
+// -----------------------------------  VERTEX MAP  ---------------------------------------------
+// ----------------------------------------------------------------------------------------------
+
 /**
- * Stores a flag of type T for each vertex in the given subgraph
+ * Maps vertices to objects of type T
  */
 template< typename T >
 struct vertex_map {
