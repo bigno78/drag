@@ -7,24 +7,24 @@
 
 #include <iostream>
 
-int main() {
+int main(int argc, char** argv) {
     graph g;
-    parse("../data/bench/sample.gv", g);
+    parse(argv[1], g);
     
     uint64_t without;
     {
         graph copy = g;
-        defaults::trans = false;
+        defaults::trans = true;
         sugiyama_layout layout(copy);
 
         auto start = now();
         layout.build();
         without = to_micro( now() - start );
         std::cout << report::base << "\n";
-        std::cout << "without: " << without << "\n";
+        std::cout << "time: " << without << "\n";
         std::cout << report::final << "\n";
     }
-    
+    /*
     uint64_t with;
     {
         defaults::trans = true;
@@ -36,7 +36,7 @@ int main() {
         std::cout << "transpose: " << with << "\n";
         std::cout << report::final << "\n";
     }
-    std::cout << with/without << "x more\n";
+    std::cout << with/without << "x more\n";*/
 
     //svg_img img("bench.svg");
     //draw_to_svg(img, layout);

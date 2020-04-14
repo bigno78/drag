@@ -169,7 +169,7 @@ private:
             }
 
             if (trans) {
-                transpose(h);
+                fast_transpose(h);
             }
 
             int cross = count_crossings(h);
@@ -216,6 +216,7 @@ private:
      */
     void transpose(hierarchy& h) {
         bool improved = true;
+        int k = 0;
         while (improved) {
             improved = false;
             
@@ -227,12 +228,101 @@ private:
                     int diff =  old - next;
                     
                     if ( diff > 0 ) {
+                        //std::cout << layer[i] << "x" << layer[i+1] << " ";
                         //std::cout << "old: " << old << " next: " << next << "\n";
                         improved = true;
                         int before = count_crossings(h);
                         exchange(h, layer[i], layer[i + 1]);
                         assert( (before - diff == count_crossings(h)) );
                         //min_cross -= diff;
+                    }
+                }
+            }
+            //std::cout << "\n";
+            k++;
+        }
+        std::cout << k << " k\n";
+    }
+
+    void fast_transpose(hierarchy& h) {
+        //std::cout << h << "\n";
+        vertex_map<bool> eligible(h.g, true);
+
+        bool improved = true;
+        int k = 0;
+        while (improved) {
+            improved = false;
+            for (auto& layer : h.layers) {
+                assert(layer.size() >= 1);
+                for (int i = 0; i < layer.size() - 1; ++i) {
+                    if (eligible.at( layer[i] )) {
+                        int old = count_vertex_crossings(h, layer[i], layer[i + 1]);
+                        int next = count_vertex_crossings(h, layer[i + 1], layer[i]);
+                        int diff =  old - next;
+                    
+                        if ( diff > 0 ) {
+                            //std::cout << layer[i] << "x" << layer[i+1] << " ";
+                            //std::cout << "old: " << old << " next: " << next << "\n";
+                            improved = true;
+                            int before = count_crossings(h);
+                            exchange(h, layer[i], layer[i + 1]);
+                            assert( (before - diff == count_crossings(h)) );
+                            //min_cross -= diff;
+                            if (i > 0) eligible.set( layer[i - 1], true );
+                            eligible.set( layer[i + 1], true );
+
+                            for (auto u : h.g.neighbours(layer[i])) {
+                                eligible.set( u, true );
+                            }
+                            for (auto u : h.g.neighbours(layer[i+1])) {
+                                eligible.set( u, true );
+                            }
+                        } 
+                        eligible.set( layer[i], false );
+                    }
+                }
+            }
+            //std::cout << "\n";
+            k++;
+        }
+        std::cout << k << " k\n";
+    }
+
+    void faster_transpose(hierarchy& h) {
+        for (auto u : h.g.vertices()) {
+            //std::cout << u << "\n";
+        }
+        vertex_map<bool> eligible(h.g, true);
+
+        bool improved = true;
+        while (improved) {
+            improved = false;
+            for (auto u : h.g.vertices()) {
+                if (eligible.at( h.pos[u] ) && h.has_next(u)) {
+                    int old = count_vertex_crossings(h, u, h.next(u));
+                    int next = count_vertex_crossings(h, h.next(u), u);
+                    int diff =  old - next;
+                
+                    if ( diff > 0 ) {
+                        //std::cout << "old: " << old << " next: " << next << "\n";
+                        improved = true;
+                        int before = count_crossings(h);
+                        exchange(h, u, h.next(u));
+                        assert( (before - diff == count_crossings(h)) );
+                        //min_cross -= diff;
+                        if ( h.has_prev(u) ) eligible.set( h.prev(u), true );
+                        /*std::cout << u << "\n";
+                        if (u == 81) {
+                            std::cout << h.has_next(u) << "\n";
+                            for (auto v : h.layer(u)) {
+                                std::cout << v << " ";
+                            }
+                            std::cout << "\n";
+                        }*/
+                        eligible.set( u, true );
+                        eligible.set( h.prev(u), false );
+                    } else {
+                        eligible.set( u, false );
                     }
                 }
             }
