@@ -29,7 +29,7 @@ struct positioning_attributes {
  * The y coordinates of nodes on the same layer have to be the same.
  */
 struct positioning {
-    virtual vec2 run(const hierarchy& h, vec2 origin) = 0;
+    virtual vec2 run(const detail::hierarchy& h, vec2 origin) = 0;
     virtual ~positioning() = default;
 };
 
@@ -45,7 +45,7 @@ struct test_positioning : public positioning {
         : nodes(nodes)
         , attr(std::move(attr)) {}  
 
-    vec2 run(const hierarchy& h, vec2 origin) override {
+    vec2 run(const detail::hierarchy& h, vec2 origin) override {
         float y = origin.y + attr.layer_dist;
         float width = 0;
         for (auto layer : h.layers) {
@@ -67,7 +67,7 @@ struct test_positioning : public positioning {
 
 
 struct edge_set {
-    vertex_map< std::vector<vertex_t> > data;
+    detail::vertex_map< std::vector<vertex_t> > data;
 
     bool contains(edge e) const { return contains(e.from, e.to); }
     bool contains(vertex_t u, vertex_t v) const { 
@@ -95,22 +95,22 @@ class fast_and_simple_positioning : public positioning {
 public:
     std::vector<node>& nodes;
     positioning_attributes attr;
-    const vertex_map<bounding_box>& boxes;
+    const detail::vertex_map<bounding_box>& boxes;
 
-    vertex_map< std::pair<vertex_t, vertex_t> > upper_medians;
-    vertex_map< std::pair<vertex_t, vertex_t> > lower_medians;
+    detail::vertex_map< std::pair<vertex_t, vertex_t> > upper_medians;
+    detail::vertex_map< std::pair<vertex_t, vertex_t> > lower_medians;
 
     enum orient { upper_left, lower_left, upper_right, lower_right };
-    std::array< vertex_map<vertex_t>, 4 > medians;
-    std::array< vertex_map<vertex_t>, 4 > root;
-    std::array< vertex_map<vertex_t>, 4 > align;
-    std::array< vertex_map<vertex_t>, 4 > sink;
-    std::array< vertex_map< std::optional<float> >, 4 > shift;
-    std::array< vertex_map< std::optional<float> >, 4 > x;
+    std::array< detail::vertex_map<vertex_t>, 4 > medians;
+    std::array< detail::vertex_map<vertex_t>, 4 > root;
+    std::array< detail::vertex_map<vertex_t>, 4 > align;
+    std::array< detail::vertex_map<vertex_t>, 4 > sink;
+    std::array< detail::vertex_map< std::optional<float> >, 4 > shift;
+    std::array< detail::vertex_map< std::optional<float> >, 4 > x;
     std::array< float, 4 > max;
     std::array< float, 4 > min;
 
-    vertex_map<int> pos;
+    detail::vertex_map<int> pos;
 
     std::vector<float> layer_size;
 
@@ -119,7 +119,7 @@ public:
 
     fast_and_simple_positioning(positioning_attributes attr, 
                                 std::vector<node>& nodes,
-                                const vertex_map<bounding_box>& boxes, 
+                                const detail::vertex_map<bounding_box>& boxes, 
                                 const graph& g)
         : nodes(nodes)
         , attr(std::move(attr))
@@ -129,7 +129,7 @@ public:
         , pos(g) 
     { }
 
-    void init(const hierarchy& h) {
+    void init(const detail::hierarchy& h) {
         for (int i = 0; i < 4; ++i) {
             medians[i].resize(h.g);
             root[i].resize(h.g);
@@ -168,7 +168,7 @@ public:
         }
     }
 
-    vec2 run(const hierarchy& h, vec2 origin) override {
+    vec2 run(const detail::hierarchy& h, vec2 origin) override {
         init(h);
         init_medians(h);
 
@@ -272,7 +272,7 @@ public:
         return { width, y - attr.layer_dist };
     }
 
-    void horizontal_compaction(const hierarchy& h, orient dir) {
+    void horizontal_compaction(const detail::hierarchy& h, orient dir) {
         auto& sink = this->sink[dir];
         auto& root = this->root[dir];
         auto& shift = this->shift[dir];
@@ -303,7 +303,7 @@ public:
         }
     }
 
-    float normalize(const hierarchy& h, float start) {
+    float normalize(const detail::hierarchy& h, float start) {
         float min = 0, max = 0;
         for(auto u : h.g.vertices()) {
             if (nodes[u].pos.x + boxes[u].size.x - boxes[u].center.x > max) {
@@ -320,7 +320,7 @@ public:
         return max - min;
     }
 
-    void normalize(const hierarchy& h, vertex_map< std::optional<float> >& pos, float start) {
+    void normalize(const detail::hierarchy& h, detail::vertex_map< std::optional<float> >& pos, float start) {
         float min = 0;
         for(auto u : h.g.vertices()) {
             if (*pos[u] < min) {
@@ -333,7 +333,7 @@ public:
         }
     }
 
-    void init_medians(const hierarchy& h) {
+    void init_medians(const detail::hierarchy& h) {
         std::vector<vertex_t> neighbours;
         for (auto u : h.g.vertices()) {
             {
@@ -382,7 +382,7 @@ public:
 
 
     // Is 'u' tail of an inner segment?
-    bool is_inner(const hierarchy& h, vertex_t u) {
+    bool is_inner(const detail::hierarchy& h, vertex_t u) {
         if (h.g.out_degree(u) != 1 || !h.g.is_dummy(u)) {
             return false;
         }
@@ -393,7 +393,7 @@ public:
      * Vertex 'u' must be a tail of inner segment.
      * Returns the position of the head of this inner segment on its layer.
      */
-    int inner_pos(const hierarchy& h, vertex_t u) {
+    int inner_pos(const detail::hierarchy& h, vertex_t u) {
         return pos[ *h.g.out_neighbours(u).begin() ];
     }
 
@@ -402,7 +402,7 @@ public:
      * Type 1 conflict occur when non-inner edge crosses inner segment.
      * Inner segment is an edge between two dummy vertices.
      */
-    void mark_conflicts(const hierarchy& h) {
+    void mark_conflicts(const detail::hierarchy& h) {
         if (h.size() < 4) {
             return;
         }
@@ -437,9 +437,9 @@ public:
     }
 
     // for each vertex choose the vertex it will be verticaly aligned to
-    void vertical_align(const hierarchy& h, orient dir) {
-        vertex_map<vertex_t>& align = this->align[dir];
-        vertex_map<vertex_t>& root = this->root[dir];
+    void vertical_align(const detail::hierarchy& h, orient dir) {
+        detail::vertex_map<vertex_t>& align = this->align[dir];
+        detail::vertex_map<vertex_t>& root = this->root[dir];
 
         for ( auto l : idx_range(h.size(), !up(dir)) ) {
             auto layer = h.layers[l];
@@ -463,7 +463,7 @@ public:
         }
     }
 
-    void place_block(const hierarchy& h, vertex_t u, orient type) {
+    void place_block(const detail::hierarchy& h, vertex_t u, orient type) {
         if (x[type][u]) {
             return;
         }
@@ -556,9 +556,9 @@ public:
     
     // FOR DEBUG PURPOUSES
     
-    void lower_left_align(const hierarchy& h) {
-        vertex_map<vertex_t>& align = this->align[orient::lower_left];
-        vertex_map<vertex_t>& root = this->root[orient::lower_left];
+    void lower_left_align(const detail::hierarchy& h) {
+        detail::vertex_map<vertex_t>& align = this->align[orient::lower_left];
+        detail::vertex_map<vertex_t>& root = this->root[orient::lower_left];
 
         for (int l = h.size() - 1; l >= 0; --l) {
             auto layer = h.layers[l];
@@ -580,9 +580,9 @@ public:
         }
     }
 
-    void lower_right_align(const hierarchy& h) {
-        vertex_map<vertex_t>& align = this->align[orient::lower_right];
-        vertex_map<vertex_t>& root = this->root[orient::lower_right];
+    void lower_right_align(const detail::hierarchy& h) {
+        detail::vertex_map<vertex_t>& align = this->align[orient::lower_right];
+        detail::vertex_map<vertex_t>& root = this->root[orient::lower_right];
 
         for (int l = h.size() - 1; l >= 0; --l) {
             auto layer = h.layers[l];
@@ -604,9 +604,9 @@ public:
         }
     }
 
-    void upper_right_align(const hierarchy& h) {
-        vertex_map<vertex_t>& align = this->align[orient::upper_right];
-        vertex_map<vertex_t>& root = this->root[orient::upper_right];
+    void upper_right_align(const detail::hierarchy& h) {
+        detail::vertex_map<vertex_t>& align = this->align[orient::upper_right];
+        detail::vertex_map<vertex_t>& root = this->root[orient::upper_right];
 
         for (int l = 0; l < h.size(); ++l) {
             auto layer = h.layers[l];
@@ -628,9 +628,9 @@ public:
         }
     }
 
-    void upper_left_align(const hierarchy& h) {
-        vertex_map<vertex_t>& align = this->align[orient::upper_left];
-        vertex_map<vertex_t>& root = this->root[orient::upper_left];
+    void upper_left_align(const detail::hierarchy& h) {
+        detail::vertex_map<vertex_t>& align = this->align[orient::upper_left];
+        detail::vertex_map<vertex_t>& root = this->root[orient::upper_left];
 
         for (int l = 0; l < h.size(); ++l) {
             auto layer = h.layers[l];
@@ -652,7 +652,7 @@ public:
         }
     }
 
-     void left_place_block(const hierarchy& h, vertex_t u, orient type) {
+     void left_place_block(const detail::hierarchy& h, vertex_t u, orient type) {
         if (x[type][u]) {
             return;
         }
@@ -677,7 +677,7 @@ public:
         } while (w != u);
     }
 
-    void right_place_block(const hierarchy& h, vertex_t u, orient type) {
+    void right_place_block(const detail::hierarchy& h, vertex_t u, orient type) {
         if (x[type][u]) {
             return;
         }

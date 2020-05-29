@@ -1,170 +1,137 @@
 #include "catch.hpp"
 #include "../graph.hpp"
 
+template<typename T>
+bool vector_contains(const std::vector<T>& vec, const T& elem) {
+    auto it = std::find(vec.begin(), vec.end(), elem);
+    return it != vec.end();
+} 
 
-TEST_CASE("edge tests") {
-    edge e = { 0, 1 };
-    edge rev = reversed(e);
-    REQUIRE( rev.tail == e.head );
-    REQUIRE( rev.head == e.tail );
-}
-
-TEST_CASE("graph size") {
-    SECTION("") {
-        graph g = graph_builder()
-                .add_edge(0, 1)
-                .add_edge(9, 2)
-                .add_edge(4, 3)
-                .build();
-    REQUIRE( g.size() == 10 );
+void assert_vertices_equal(const graph& g, const std::vector<vertex_t>& expected) {
+    int count = 0;
+    for (auto u : g.vertices()) {
+        ++count;
+        REQUIRE( vector_contains(expected, u) );
     }
-    SECTION("") {
-        graph g = graph_builder()
-                .add_edge(0, 1)
-                .add_edge(2, 8)
-                .add_edge(4, 3)
-                .build();
-    REQUIRE( g.size() == 9 );
+    REQUIRE( count == expected.size() );
+}
+
+void assert_neighbours_equal(const std::vector<vertex_t>& given, const std::vector<vertex_t>& expected) {
+    int count = 0;
+    for (auto u : given) {
+        ++count;
+        REQUIRE( vector_contains(expected, u) );
     }
+    REQUIRE( count == expected.size() );
 }
 
-bool is_edge(const graph& g, vertex_t u, vertex_t v) {
-    return g.is_edge(u, v) && g.is_edge( { u, v } );
-}
-bool is_connected(const graph& g, vertex_t u, vertex_t v) {
-    return g.is_connected(u, v) && g.is_connected( { u, v } );
+TEST_CASE("changing default node size") {
+    graph g;
+    float old_default_size = g.default_size();
+    float new_default_size = old_default_size + 10;
+    
+    g.default_size(new_default_size);
+
+    REQUIRE(g.default_size() == new_default_size);
 }
 
-TEST_CASE("checking for edges") {
-    graph g = graph_builder()
-                .add_edge(0, 1)
-                .add_edge(1, 0)
-                .add_edge(4, 3)
-                .build();
+TEST_CASE("empty graph") {
+    graph g;
 
-    REQUIRE( is_edge(g, 0, 1) );
-    REQUIRE( is_edge(g, 1, 0) );
-    REQUIRE( is_edge(g, 4, 3) );
-    REQUIRE( is_connected(g, 4, 3) );
-    REQUIRE( is_connected(g, 3, 4) );
-    REQUIRE( is_connected(g, 0, 1) );
-    REQUIRE( is_connected(g, 1, 0) );
-    REQUIRE_FALSE( is_edge(g, 3, 4) );
-    REQUIRE_FALSE( is_edge(g, 2, 1) );
-    REQUIRE_FALSE( is_connected(g, 2, 1) );
+    REQUIRE( g.size() == 0 );
+    assert_vertices_equal(g, {});
+}
+
+TEST_CASE("adding nodes") {
+    graph g;    
+    float old_default_size = g.default_size();
+
+    auto a = g.add_node();
+    
+    float new_default_size = old_default_size + 10;
+    g.default_size(new_default_size);
+    auto b = g.add_node();
+
+    float custom_size = new_default_size + 10;
+    auto c = g.add_node(custom_size);
+
+    REQUIRE( g.size() == 3 );
+    
+    REQUIRE( g.node_size(a) == old_default_size );
+    REQUIRE( g.node_size(b) == new_default_size );
+    REQUIRE( g.node_size(c) == custom_size );
+    
+    assert_vertices_equal(g, { a, b, c });
+
+    assert_neighbours_equal(g.out_neighbours(a), {});
+    assert_neighbours_equal(g.in_neighbours(a), {});
+    assert_neighbours_equal(g.out_neighbours(b), {});
+    assert_neighbours_equal(g.in_neighbours(b), {});
+    assert_neighbours_equal(g.out_neighbours(c), {});
+    assert_neighbours_equal(g.in_neighbours(c), {});
 }
 
 TEST_CASE("adding edges") {
-    graph g = graph_builder()
-                .add_edge(5, 8)
-                .build();
+    graph g;
+    auto a = g.add_node();
+    auto b = g.add_node();
+    auto c = g.add_node();
+    auto d = g.add_node();
 
-    SECTION("two vetices") {
-        g.add_edge(2,4);
-        REQUIRE( is_edge(g, 2, 4) );
-        REQUIRE( is_connected(g, 2, 4) );
-        REQUIRE( is_connected(g, 4, 2) );
-        REQUIRE_FALSE( is_edge(g, 4, 2) );
+    g.add_edge(a, c);
+    g.add_edge(d, b);
+    g.add_edge(d, a);
 
-        g.add_edge(1, 1);
-        REQUIRE( is_edge(g, 1, 1) );
-        REQUIRE( is_connected(g, 1, 1) );
+    assert_neighbours_equal(g.out_neighbours(a), {c});
+    assert_neighbours_equal(g.out_neighbours(b), {});
+    assert_neighbours_equal(g.out_neighbours(c), {});
+    assert_neighbours_equal(g.out_neighbours(d), {b, a});
 
-        g.add_edge(2, 4);
-        REQUIRE( is_edge(g, 2, 4) );
-        REQUIRE( is_connected(g, 2, 4) );
-        REQUIRE( is_connected(g, 4, 2) );
-        REQUIRE_FALSE( is_edge(g, 4, 2) );
-
-        g.add_edge(4, 2);
-        REQUIRE( is_edge(g, 2, 4) );
-        REQUIRE( is_connected(g, 2, 4) );
-        REQUIRE( is_connected(g, 4, 2) );
-        REQUIRE( is_edge(g, 4, 2) );
-    }
-
-    SECTION("edge struct") {
-        g.add_edge({2,4});
-        REQUIRE( is_edge(g, 2, 4) );
-        REQUIRE( is_connected(g, 2, 4) );
-        REQUIRE( is_connected(g, 4, 2) );
-        REQUIRE_FALSE( is_edge(g, 4, 2) );
-
-        g.add_edge({1, 1});
-        REQUIRE( is_edge(g, 1, 1) );
-        REQUIRE( is_connected(g, 1, 1) );
-
-        g.add_edge({2, 4});
-        REQUIRE( is_edge(g, 2, 4) );
-        REQUIRE( is_connected(g, 2, 4) );
-        REQUIRE( is_connected(g, 4, 2) );
-        REQUIRE_FALSE( is_edge(g, 4, 2) );
-
-        g.add_edge({4, 2});
-        REQUIRE( is_edge(g, 2, 4) );
-        REQUIRE( is_connected(g, 2, 4) );
-        REQUIRE( is_connected(g, 4, 2) );
-        REQUIRE( is_edge(g, 4, 2) );
-    }
+    assert_neighbours_equal(g.in_neighbours(a), {d});
+    assert_neighbours_equal(g.in_neighbours(b), {d});
+    assert_neighbours_equal(g.in_neighbours(c), {a});
+    assert_neighbours_equal(g.in_neighbours(d), {});
 }
 
 TEST_CASE("removing edges") {
-    graph g = graph_builder()
-                .add_edge(8, 5)
-                .add_edge(5, 8)
-                .add_edge(1, 6)
-                .add_edge(1, 1)
-                .build();
+    graph g;
+    auto a = g.add_node();
+    auto b = g.add_node();
+    auto c = g.add_node();
+    auto d = g.add_node();
+    g.add_edge(a, b);
+    g.add_edge(a, c);
+    g.add_edge(c, d);
 
-    SECTION("two vertices") {
-        g.remove_edge(8, 5);
-        REQUIRE(is_edge(g, 5, 8));
-        REQUIRE(is_edge(g, 1, 6));
-        REQUIRE(is_connected(g, 5, 8));
-        REQUIRE_FALSE(is_edge(g, 8, 5));
+    g.remove_edge(a, c);
 
-        g.remove_edge(5, 8);
-        REQUIRE_FALSE(is_edge(g, 5, 8));
-        REQUIRE(is_edge(g, 1, 6));
-        REQUIRE_FALSE(is_connected(g, 5, 8));
-        REQUIRE_FALSE(is_edge(g, 8, 5));
+    assert_neighbours_equal(g.out_neighbours(a), {b});
+    assert_neighbours_equal(g.out_neighbours(b), {});
+    assert_neighbours_equal(g.out_neighbours(c), {d});
+    assert_neighbours_equal(g.out_neighbours(d), {});
 
-        g.remove_edge(1, 1);
-        REQUIRE(is_edge(g, 1, 6));
-        REQUIRE_FALSE(is_edge(g, 1, 1));
-    }
-
-    SECTION("edge struct") {
-        g.remove_edge({8, 5});
-        REQUIRE(is_edge(g, 5, 8));
-        REQUIRE(is_edge(g, 1, 6));
-        REQUIRE(is_connected(g, 5, 8));
-        REQUIRE_FALSE(is_edge(g, 8, 5));
-
-        g.remove_edge({5, 8});
-        REQUIRE_FALSE(is_edge(g, 5, 8));
-        REQUIRE(is_edge(g, 1, 6));
-        REQUIRE_FALSE(is_connected(g, 5, 8));
-        REQUIRE_FALSE(is_edge(g, 8, 5));
-
-        g.remove_edge({1, 1});
-        REQUIRE(is_edge(g, 1, 6));
-        REQUIRE_FALSE(is_edge(g, 1, 1));
-    }
+    assert_neighbours_equal(g.in_neighbours(a), {});
+    assert_neighbours_equal(g.in_neighbours(b), {a});
+    assert_neighbours_equal(g.in_neighbours(c), {});
+    assert_neighbours_equal(g.in_neighbours(d), {c});
 }
 
-TEST_CASE("iteration through out edges") {
+TEST_CASE("graph builder") {
     graph g = graph_builder()
-                .add_edge(0, 2)
-                .add_edge(0, 4)
-                .add_edge(1, 5)
+                .add_edge(0, 1)
+                .add_edge(1, 3)
                 .build();
 
-    std::vector<vertex_t> vertices = { 2, 4 };
+    REQUIRE(g.size() == 4);
+    assert_vertices_equal(g, {0, 1, 2, 3});
 
-    int i = 0;
-    for (auto v : g.out_edges(0)) {
-        REQUIRE(v == vertices[i++]);
-    }
-    REQUIRE(i == vertices.size());
+    assert_neighbours_equal(g.out_neighbours(0), {1});
+    assert_neighbours_equal(g.out_neighbours(1), {3});
+    assert_neighbours_equal(g.out_neighbours(2), {});
+    assert_neighbours_equal(g.out_neighbours(3), {});
+
+    assert_neighbours_equal(g.in_neighbours(0), {});
+    assert_neighbours_equal(g.in_neighbours(1), {0});
+    assert_neighbours_equal(g.in_neighbours(2), {});
+    assert_neighbours_equal(g.in_neighbours(3), {1});
 }

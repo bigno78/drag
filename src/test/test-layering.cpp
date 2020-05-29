@@ -1,28 +1,134 @@
 #include<algorithm>
 
 #include "catch.hpp"
+//#include "../interface.hpp"
 #include "../layering.hpp"
 #include "test-utils.hpp"
 
 using namespace detail;
 
-void check_hierarchy(const subgraph& g, const hierarchy& h) {
-    int l = 0;
+void check_hierarchy(const hierarchy& h) {
+    int layer_idx = 0;
     for (auto layer : h.layers) {
+        int pos_in_layer = 0;
         for (auto u : layer) {
-            REQUIRE( h.ranking[u] == l);
-            for (auto v : g.in_neighbours(u)) {
-                std::cout << edge{v, u} << "\n";
-                REQUIRE( h.ranking[v] < l);
+            REQUIRE( h.ranking[u] == layer_idx);
+            REQUIRE( h.pos[u] == pos_in_layer);
+
+            for (auto v : h.g.in_neighbours(u)) {
+                REQUIRE( h.ranking[v] < layer_idx);
             }
-            for (auto v : g.out_neighbours(u)) {
-                REQUIRE( h.ranking[v] > l);
+            for (auto v : h.g.out_neighbours(u)) {
+                REQUIRE( h.ranking[v] > layer_idx);
             }
+
+            pos_in_layer++;
         }
-        ++l;
+        ++layer_idx;
     }
 }
 
+int bruteforce_layering(const subgraph& g, int vertex_idx, detail::vertex_map<int>& ranking) {
+    if (vertex_idx == g.size()) {
+        int total_length = 0;
+        for (auto u : g.vertices()) {
+            for (auto v : g.out_neighbours(u)) {
+                assert(ranking[v] > ranking[u]);
+                total_length += ranking[v] - ranking[u];
+            }
+        }
+        //std::cout << "done " << total_length << "\n";
+        return total_length;
+    }
+    vertex_t u = g.vertex(vertex_idx);
+
+    int best_total_length = std::numeric_limits<int>::max();
+    
+    int start_rank = 0;
+    for (auto v : g.in_neighbours(u)) {
+        start_rank = std::max(start_rank, ranking[v] + 1);        
+    }
+
+    int end_rank = g.size();
+    for (auto v : g.out_neighbours(u)) {
+        if (ranking[v] != -1) {
+            //std::cout << v << ": " << ranking[v] << "\n";
+            end_rank = std::min(end_rank, ranking[v]);
+        }
+    }
+
+    //std::cout << u << ": " << start_rank << " - " << end_rank << "\n";
+    for (int rank = start_rank; rank < end_rank; ++rank) {
+        //std::cout << "set " << u << " to " << rank << "\n";
+        ranking[u] = rank;
+        best_total_length = std::min(best_total_length, bruteforce_layering(g, vertex_idx + 1, ranking));
+    }
+
+    ranking[u] = -1;
+
+    return best_total_length;
+}
+
+int bruteforce_layering(const subgraph& g) {
+    if (g.size() == 0) {
+        return 0;
+    }
+    detail::vertex_map<int> ranking(g, -1);
+    std::cout << g.size() << "\n";
+    return bruteforce_layering(g, 0, ranking);
+}
+
+void test_layering(graph& source, int optimal_length = -1) {
+    detail::subgraph g = make_subgraph(source);
+    detail::network_simplex_layering layering_module;
+
+    auto h = layering_module.run(g);
+    check_hierarchy(h);
+
+    if (optimal_length != -1) {
+        int length = get_total_edge_length(h);
+        REQUIRE( length == optimal_length );
+    }
+}
+
+TEST_CASE("Layering empty graph.") {
+    graph source;
+    test_layering(source, 0);
+}
+
+TEST_CASE("Basic layering.") {
+    graph source = graph_builder()
+                .add_edge(0, 1).add_edge(1, 2).add_edge(3, 2)
+                .build();
+
+    SECTION("original") {
+        test_layering(source, 3);
+    }
+
+    graph rev = reversed(source);
+    SECTION("reversed") {
+        test_layering(rev, 3);
+    }
+}
+
+TEST_CASE("Layering requiring network simplex.") {
+    graph source = graph_builder()
+                .add_edge(0, 1).add_edge(0, 5).add_edge(0, 6)
+                .add_edge(1, 2).add_edge(2, 3).add_edge(3, 4)
+                .add_edge(5, 7).add_edge(6, 7).add_edge(7, 4)
+                .build();
+
+    SECTION("original") {
+        test_layering(source, 10);
+    }
+
+    graph rev = reversed(source);
+    SECTION("reversed") {
+        test_layering(rev, 10);
+    }
+}
+
+/*
 TEST_CASE("Layering stuff.") {
     graph source = graph_builder()
                 .add_edge(0, 1).add_edge(0, 2).add_edge(0, 6)
@@ -82,7 +188,7 @@ TEST_CASE("Splitting long edges.") {
             REQUIRE( has_edge(g, { path[i - 1], path[i] }) );
         }
     }
-}
+}*/
 
 /*
 TEST_CASE("initial ranking") {

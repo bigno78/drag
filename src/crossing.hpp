@@ -241,7 +241,7 @@ private:
             //std::cout << "\n";
             k++;
         }
-        std::cout << k << " k\n";
+        //std::cout << k << " k\n";
     }
 
     void fast_transpose(hierarchy& h) {
@@ -285,7 +285,7 @@ private:
             //std::cout << "\n";
             k++;
         }
-        std::cout << k << " k\n";
+        //std::cout << k << " k\n";
     }
 
     void faster_transpose(hierarchy& h) {
