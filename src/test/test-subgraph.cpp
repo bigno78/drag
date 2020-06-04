@@ -1,7 +1,56 @@
 #include "catch.hpp"
 #include "../subgraph.hpp"
+#include "test-utils.hpp"
 
 using namespace detail;
+
+template<typename T>
+bool vector_contains(const std::vector<T>& vec, const T& elem) {
+    auto it = std::find(vec.begin(), vec.end(), elem);
+    return it != vec.end();
+} 
+
+void assert_vertices_equal(const graph& g, const std::vector<vertex_t>& expected) {
+    int count = 0;
+    for (auto u : g.vertices()) {
+        ++count;
+        REQUIRE( vector_contains(expected, u) );
+    }
+    REQUIRE( count == expected.size() );
+}
+
+void assert_has_edge(const subgraph& g, vertex_t u, vertex_t v) {
+    REQUIRE( g.has_edge(u, v) );
+    REQUIRE( g.has_edge({u, v}) );
+}
+
+void assert_neighbours_equal(const std::vector<vertex_t>& given, const std::vector<vertex_t>& expected) {
+    int count = 0;
+    for (auto u : given) {
+        ++count;
+        REQUIRE( vector_contains(expected, u) );
+    }
+    REQUIRE( count == expected.size() );
+}
+
+TEST_CASE("creating subgrap") {
+    graph source = graph_builder()
+                .add_edge(0, 1)
+                .add_edge(0, 2)
+                .build();
+    
+    subgraph g(source, { 0, 1, 2 });
+
+    REQUIRE( g.size() == 3 );
+    REQUIRE( g.size() == 3 );
+    for (auto v : source.vertices()) {
+        REQUIRE( source.node_size(v) == g.node_size(v) );
+    }
+    assert_has_edge(g, 0, 1);
+    assert_has_edge(g, 0, 2);
+}
+
+// ------------------------  OLD STUFF -----------------------------------  
 
 graph source = graph_builder()
             .add_edge(0, 3).add_edge(0, 5)

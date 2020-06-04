@@ -1,3 +1,6 @@
+#ifndef SUBGRAPH_HPP
+#define SUBGRAPH_HPP
+
 #pragma once
 
 #include <vector>
@@ -5,19 +8,18 @@
 #include <map>
 
 #include "utils.hpp"
-#include "interface.hpp"
+#include "graph.hpp"
 
 
 namespace detail {
 
-// ----------------------------------------------------------------------------------------------
-// --------------------------------------  SUBGRAPH  --------------------------------------------
-// ----------------------------------------------------------------------------------------------
-
-
 struct edge {
     vertex_t from, to;
 };
+
+// ----------------------------------------------------------------------------------------------
+// --------------------------------------  SUBGRAPH  --------------------------------------------
+// ----------------------------------------------------------------------------------------------
 
 inline bool operator==(edge lhs, edge rhs) { return lhs.to == rhs.to && lhs.from == rhs.from; }
 inline bool operator!=(edge lhs, edge rhs) { return !(lhs == rhs); }
@@ -46,7 +48,11 @@ public:
     subgraph(graph& g, std::vector< vertex_t > vertices) 
         : m_source(g)
         , m_vertices(std::move(vertices)) {
-            m_dummy_border = *std::max_element(m_vertices.begin(), m_vertices.end());
+            if (!m_vertices.empty()) {
+                m_dummy_border = 1 + *std::max_element(m_vertices.begin(), m_vertices.end());
+            } else {
+                m_dummy_border = 0;
+            }
         }
 
     unsigned size() const { return m_vertices.size(); }
@@ -61,7 +67,7 @@ public:
     }
     vertex_t add_dummy() { return add_dummy(0); }
 
-    bool is_dummy(vertex_t u) const { return u > m_dummy_border; }
+    bool is_dummy(vertex_t u) const { return u >= m_dummy_border; }
 
     void remove_edge(edge e) { m_source.remove_edge(e.from, e.to); }
     void remove_edge(vertex_t u, vertex_t v) { remove_edge( { u, v } ); }
@@ -78,10 +84,14 @@ public:
     const std::vector<vertex_t>& in_neighbours(vertex_t u) const { return m_source.in_neighbours(u); }
     chain_range< std::vector<vertex_t> > neighbours(vertex_t u) const { return { out_neighbours(u), in_neighbours(u) }; }
 
+    vertex_t out_neighbour(vertex_t u, int i) const { return m_source.out_neighbours(u)[i]; }
+    vertex_t in_neighbour(vertex_t u, int i) const { return m_source.in_neighbours(u)[i]; }
+
     unsigned out_degree(vertex_t u) const { return m_source.out_neighbours(u).size(); }
     unsigned in_deree(vertex_t u) const { return m_source.in_neighbours(u).size(); }
 
     const std::vector<vertex_t>& vertices() const { return m_vertices; }
+    vertex_t vertex(int i) const { return m_vertices[i]; }
 };
 
 
@@ -216,3 +226,5 @@ std::map<vertex_t, std::string> debug_labels;
 
 
 } //namespace detail
+
+#endif

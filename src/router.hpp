@@ -36,6 +36,7 @@ public:
 
     link make_path(subgraph& g, vertex_t u, vertex_t v) {
         link l{ u, v, {} };
+        //std::cout << u << " " << v << "\n";
 
         int dir = sgn(nodes[u].pos.y - nodes[v].pos.y);
 
@@ -45,6 +46,7 @@ public:
         while (g.is_dummy(v)) {
             l.points.push_back( nodes[v].pos );
             u = v;
+            //std::cout << v << "\n";
             v = next(g, v);
         }
 

@@ -1,3 +1,6 @@
+#ifndef LAYOUT_HPP
+#define LAYOUT_HPP
+
 #pragma once
 
 #include <vector>
@@ -37,7 +40,7 @@ class sugiyama_layout {
     std::unique_ptr< detail::cycle_removal > cycle_rem =     
                         std::make_unique< detail::dfs_removal >();
     std::unique_ptr< detail::layering > layering =
-                        std::make_unique< detail::network_simplex_layering >(g);
+                        std::make_unique< detail::network_simplex_layering >();
     std::unique_ptr< detail::crossing_reduction > crossing = 
                         std::make_unique< detail::barycentric_heuristic >();
     std::unique_ptr< detail::positioning > positioning = 
@@ -234,3 +237,5 @@ private:
     }
 };
 
+
+#endif

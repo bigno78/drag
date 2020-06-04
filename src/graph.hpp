@@ -1,3 +1,6 @@
+#ifndef GRAPH_HPP
+#define GRAPH_HPP
+
 #pragma once
 
 #include <vector>
@@ -17,7 +20,10 @@ class graph {
     float m_default_radius = defaults::node_size;
 
 public:
+    // add node with default radius
     vertex_t add_node() { return add_node(m_default_radius); }
+    
+    // add node with a given radius
     vertex_t add_node(float radius) {
         m_out_neighbours.emplace_back();
         m_in_neighbours.emplace_back();
@@ -36,10 +42,16 @@ public:
         remove_neighour(m_in_neighbours[to], from);
     }
 
+    // get the size of <u>
     float node_size(vertex_t u) const { return m_node_size[u]; }
+
+    // set the size of <u> to <r>
     void node_size(vertex_t u, float r) { m_node_size[u] = r; }
 
+    // set the default size of nodes to <r>
     void default_size(float r) { m_default_radius = r; }
+
+    // get the default size
     float default_size() const { return m_default_radius; }
 
     unsigned size() const { return m_node_size.size(); }
@@ -94,3 +106,5 @@ private:
         }
     }
 };
+
+#endif

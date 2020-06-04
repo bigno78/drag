@@ -1,3 +1,6 @@
+#ifndef TYPES_HPP
+#define TYPES_HPP
+
 #pragma once
 
 #include <string>
@@ -30,3 +33,5 @@ namespace defaults {
     inline int forgv = 4;
     inline bool trans = true;
 }
+
+#endif
