@@ -1,8 +1,16 @@
-#!/bin/sh
+#!/bin/bash
+
+
+if [ $# -ne 2 ]
+then
+	echo "usage: $0 input_dir output_dir"
+	exit 1
+fi
 
 test -e $2 || mkdir $2
-for file in $(ls $1)
+for F in `(cd $1 && ls *.graphml)`;
 do
-	dot -Tsvg -o $2/$file.svg $1/$file
+	OUT=${F%.graphml}.dot
+	graphml2gv $1/$F 2> /dev/null | dot -o $2/$OUT
 done
 
