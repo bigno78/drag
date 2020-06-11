@@ -108,6 +108,8 @@ class barycentric_heuristic : public crossing_reduction {
     vertex_map<int> best_order;
     int min_cross;
 
+    int cross_calls = 0;
+
 public:
     void run(hierarchy& h) override {
         best_order = h.pos;
@@ -142,6 +144,8 @@ public:
 #ifdef REPORTING
         report::final = min_cross;
 #endif
+
+        std::cout << cross_calls << "\n";
     }
 
     void set_trans(bool a) { trans = a; }
@@ -169,7 +173,11 @@ private:
             }
 
             if (trans) {
+#ifdef FAST
                 fast_transpose(h);
+#else
+                transpose(h);
+#endif
             }
 
             int cross = count_crossings(h);
@@ -226,14 +234,15 @@ private:
                     int old = count_vertex_crossings(h, layer[i], layer[i + 1]);
                     int next = count_vertex_crossings(h, layer[i + 1], layer[i]);
                     int diff =  old - next;
+                    cross_calls += 2;
                     
                     if ( diff > 0 ) {
                         //std::cout << layer[i] << "x" << layer[i+1] << " ";
                         //std::cout << "old: " << old << " next: " << next << "\n";
                         improved = true;
-                        int before = count_crossings(h);
+                        //int before = count_crossings(h);
                         exchange(h, layer[i], layer[i + 1]);
-                        assert( (before - diff == count_crossings(h)) );
+                        //assert( (before - diff == count_crossings(h)) );
                         //min_cross -= diff;
                     }
                 }
@@ -249,8 +258,9 @@ private:
         vertex_map<bool> eligible(h.g, true);
 
         bool improved = true;
-        int k = 0;
+        int iters = 0;
         while (improved) {
+            iters++;
             improved = false;
             for (auto& layer : h.layers) {
                 assert(layer.size() >= 1);
@@ -259,14 +269,15 @@ private:
                         int old = count_vertex_crossings(h, layer[i], layer[i + 1]);
                         int next = count_vertex_crossings(h, layer[i + 1], layer[i]);
                         int diff =  old - next;
+                        cross_calls += 2;
                     
                         if ( diff > 0 ) {
                             //std::cout << layer[i] << "x" << layer[i+1] << " ";
                             //std::cout << "old: " << old << " next: " << next << "\n";
                             improved = true;
-                            int before = count_crossings(h);
+                            //int before = count_crossings(h);
                             exchange(h, layer[i], layer[i + 1]);
-                            assert( (before - diff == count_crossings(h)) );
+                            //assert( (before - diff == count_crossings(h)) );
                             //min_cross -= diff;
                             if (i > 0) eligible.set( layer[i - 1], true );
                             eligible.set( layer[i + 1], true );
@@ -283,7 +294,6 @@ private:
                 }
             }
             //std::cout << "\n";
-            k++;
         }
         //std::cout << k << " k\n";
     }
