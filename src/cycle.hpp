@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <limits>
 
 #include "subgraph.hpp"
 
@@ -12,8 +13,8 @@ namespace detail {
  * i.e. if edge (u, v) cuased a cycle, it is saved as (v, u)
  */
 struct rev_edges {
-    std::vector<edge> reversed;   /**< The edges that were reversed. */
-    std::vector<edge> collapsed;  /**< Reversed edges which resulted in a duplicated edge and thus were collapsed */
+    edge_set reversed;   /**< The edges that were reversed. */
+    edge_set collapsed;  /**< Reversed edges which resulted in a duplicated edge and thus were collapsed */
     std::vector<vertex_t> loops;  /**< Loops */
 };
 
@@ -48,45 +49,37 @@ public:
         // find cycles
         for (auto u : g.vertices()) {
             if (marks[u] == state::unvisited) {
-                dfs(g, marks, u, reversed_edges);
+                dfs(g, marks, std::numeric_limits<vertex_t>::max(), u, reversed_edges);
             }
-        }
-
-        for (auto& e : reversed_edges.reversed) {
-            g.remove_edge(e);
-            e = reversed(e);
-            g.add_edge(e);
-        }
-
-        for (auto& e : reversed_edges.collapsed) {
-            g.remove_edge(e);
-            e = reversed(e);
-        }
-
-        for (auto u : reversed_edges.loops) {
-            g.remove_edge(u, u);
         }
 
         return reversed_edges;
     }
 
 private:
-    void dfs(subgraph& g, vertex_map<state>& marks, vertex_t u, rev_edges& reversed_edges) {
+    void dfs(subgraph& g, vertex_map<state>& marks, vertex_t parent, vertex_t u, rev_edges& reversed_edges) {
         marks[u] = state::in_progress;
+        
         for (auto v : g.out_neighbours(u)) {
-            if (u == v) {
+            if (u == v) { // a loop
+                g.remove_edge(u, u);
                 reversed_edges.loops.push_back(u);
             } else if (marks[v] == state::in_progress) { // there is a cycle
-                // Yes, I know. It should be saved as (v, u). But at this point I am just saving edges
-                // to be reversed later. When that happens the order will be switched.
-                if (g.has_edge(v, u))
-                    reversed_edges.collapsed.push_back( { u, v } );
-                else
-                    reversed_edges.reversed.push_back( { u, v } );
+                if (g.has_edge(v, u)) { // two-cycle
+                    std::cout << edge{u,v} << "\n";
+                    g.remove_edge(u, v);
+                    reversed_edges.collapsed.insert({ v, u });
+                } else { // regular cycle
+                    std::cout << edge{u,v} << " reg\n";
+                    g.remove_edge(u, v);
+                    g.add_edge(v, u);
+                    reversed_edges.reversed.insert({ v, u });
+                }
             } else if (marks[v] == state::unvisited) {
-                dfs(g, marks, v, reversed_edges);
+                dfs(g, marks, u, v, reversed_edges);
             }
         }
+
         marks[u] = state::done;
     }
 };

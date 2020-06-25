@@ -29,7 +29,7 @@ struct positioning_attributes {
  * The y coordinates of nodes on the same layer have to be the same.
  */
 struct positioning {
-    virtual vec2 run(const detail::hierarchy& h, vec2 origin) = 0;
+    virtual vec2 run(detail::hierarchy& h, vec2 origin) = 0;
     virtual ~positioning() = default;
 };
 
@@ -45,7 +45,7 @@ struct test_positioning : public positioning {
         : nodes(nodes)
         , attr(std::move(attr)) {}  
 
-    vec2 run(const detail::hierarchy& h, vec2 origin) override {
+    vec2 run(detail::hierarchy& h, vec2 origin) override {
         float y = origin.y + attr.layer_dist;
         float width = 0;
         for (auto layer : h.layers) {
@@ -65,21 +65,6 @@ struct test_positioning : public positioning {
     }
 };
 
-
-struct edge_set {
-    detail::vertex_map< std::vector<vertex_t> > data;
-
-    bool contains(edge e) const { return contains(e.from, e.to); }
-    bool contains(vertex_t u, vertex_t v) const { 
-        return data.contains(u) && std::find(data[u].begin(), data[u].end(), v) != data[u].end();
-    }
-
-    void insert(edge e) { insert(e.from, e.to); }
-    void insert(vertex_t u, vertex_t v) {
-        data.add_vertex(u);
-        data[u].push_back(v);
-    }
-};
 
 /**
  * Bounding box of a vertex.
@@ -168,7 +153,7 @@ public:
         }
     }
 
-    vec2 run(const detail::hierarchy& h, vec2 origin) override {
+    vec2 run(detail::hierarchy& h, vec2 origin) override {
         init(h);
         init_medians(h);
 
@@ -234,11 +219,12 @@ public:
             std::cout << "min: " << min[i] << " max: " << max[i] << " shift: " << shift[i] << "\n";
         }*/
 
-
+        h.layer_pos.resize(h.size());
         float y = origin.y;
         std::vector<float> vals;
         for (int l = 0; l < h.size(); ++l) {
             y += layer_size[l];
+            h.layer_pos[l] = y;
             for (auto u : h.layers[l]) {
 #ifdef DEBUG_COORDINATE
                 if(produce_layout < 4) {

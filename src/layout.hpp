@@ -121,19 +121,7 @@ private:
         }
         vec2 dimensions = positioning->run(h, start);
 
-        // restore the reversed edges
-        for (auto e : reversed_edges.reversed) {
-            reverse_path(e, g);
-        }
-        for (auto e : reversed_edges.collapsed) {
-            reverse_path(e, g, false);
-        }
-        for (auto u : reversed_edges.loops) {
-            g.add_edge(u, u);
-        }
-
-        //construct_paths(g, reversed_edges.loops);
-        routing->run(h);
+        routing->run(h, reversed_edges);
 
         return dimensions;
     }
@@ -160,13 +148,10 @@ private:
      */
     void update_reversed_edges(detail::rev_edges& reversed_edges, const std::vector< detail::long_edge >& long_edges) {
         for (const auto& elem : long_edges) {
-            auto i = std::find(reversed_edges.reversed.begin(), reversed_edges.reversed.end(), elem.orig);
-            if (i != reversed_edges.reversed.end()) {
-                i->to = elem.path[1];
-            }
-            auto j = std::find(reversed_edges.collapsed.begin(), reversed_edges.collapsed.end(), elem.orig);
-            if (j != reversed_edges.collapsed.end()) {
-                j->to = elem.path[1];
+            if (reversed_edges.reversed.remove(elem.orig)) {
+                reversed_edges.reversed.insert(elem.path[0], elem.path[1]);
+            } else if (reversed_edges.collapsed.remove(elem.orig)) {
+                reversed_edges.collapsed.insert(elem.path[0], elem.path[1]);
             }
         }
     }

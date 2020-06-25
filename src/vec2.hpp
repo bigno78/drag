@@ -28,6 +28,7 @@ inline vec2& operator+=(vec2& lhs, float a) {
     lhs = lhs + a;
     return lhs;
 }
+inline vec2 operator-(vec2 v) { return -1*v; }
 inline vec2 operator-(vec2 lhs, vec2 rhs) { return { lhs.x - rhs.x, lhs.y - rhs.y }; }
 inline vec2 operator-(float a, vec2 rhs) { return { a - rhs.x, a - rhs.y }; }
 inline vec2 operator-(vec2 lhs, float a) { return { lhs.x - a, lhs.y - a }; }
@@ -50,3 +51,5 @@ inline vec2 rotate(vec2 vec, float deg) {
     float cos = std::cos(rad);
     return { vec.x*cos + vec.y*sin, -vec.x*sin + vec.y*cos };
 }
+
+inline float dot(vec2 u, vec2 v) { return u.x*v.x + u.y*v.y; }

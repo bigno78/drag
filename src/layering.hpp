@@ -27,6 +27,7 @@ struct hierarchy {
     vertex_map<int> ranking;
     vertex_map<int> pos;
     std::vector< std::vector<vertex_t> > layers;
+    std::vector< float > layer_pos;
     subgraph& g;
 
     hierarchy(subgraph& g) : hierarchy(g, -1) {}
@@ -76,6 +77,10 @@ struct hierarchy {
 
         layers[ ranking[u] ][ pos[u] ] = u;
         layers[ ranking[v] ][ pos[v] ] = v;
+    }
+
+    bool valid_pos(int layer_idx, int i) const {
+        return i >= 0 && i < layers[layer_idx].size();
     }
 };
 

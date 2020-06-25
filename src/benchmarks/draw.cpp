@@ -22,7 +22,7 @@ void draw_graph(const std::string& in, const std::string& out) {
 	l.build();
 
 	svg_img img(out);
-	draw_to_svg(img, l, lbls);
+	draw_to_svg(img, l/*, lbls*/);
 }
 
 int main(int argc, char **argv) {

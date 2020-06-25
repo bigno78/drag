@@ -73,6 +73,7 @@ public:
     void remove_edge(vertex_t u, vertex_t v) { remove_edge( { u, v } ); }
 
     float node_size(vertex_t u) const { return m_source.node_size(u); }
+    float node_size() const { return m_source.default_size(); }
 
     bool has_edge(edge e) const { 
         auto out = out_neighbours(e.from);
@@ -193,6 +194,15 @@ struct vertex_map {
         }
     }
 
+    void init(const subgraph& g, T val) {
+        for (auto u : g.vertices()) {
+            if (u >= data.size()) {
+                data.resize(u + 1);
+            }
+            data[u] = val;
+        }
+    }
+
     // only to be used with T = bool, because the operator[] doesnt work :(
     T at(vertex_t u) const { return data[u]; }
     void set(vertex_t u, T val) { data[u] = val; }
@@ -220,9 +230,35 @@ struct vertex_map {
 };
 
 
+struct edge_set {
+    vertex_map< std::vector<vertex_t> > data;
+
+    bool contains(edge e) const { return contains(e.from, e.to); }
+    bool contains(vertex_t u, vertex_t v) const { 
+        return data.contains(u) && std::find(data[u].begin(), data[u].end(), v) != data[u].end();
+    }
+
+    void insert(edge e) { insert(e.from, e.to); }
+    void insert(vertex_t u, vertex_t v) {
+        data.add_vertex(u);
+        data[u].push_back(v);
+    }
+
+    bool remove(edge e) { return remove(e.from, e.to); }
+    bool remove(vertex_t u, vertex_t v) {
+        if (!data.contains(u))
+            return false;
+        auto it = std::find(data[u].begin(), data[u].end(), v);
+        if (it == data[u].end())
+            return false;
+        data[u].erase(it);
+        return true;
+    }
+};
+
 // FOR DEBUG PURPOUSES
-graph debug_graph;
 std::map<vertex_t, std::string> debug_labels;
+
 
 
 } //namespace detail
