@@ -107,7 +107,7 @@ public:
                                 const detail::vertex_map<bounding_box>& boxes, 
                                 const graph& g)
         : nodes(nodes)
-        , attr(std::move(attr))
+        , attr(attr)
         , boxes(boxes)
         , upper_medians(g)
         , lower_medians(g)
@@ -223,7 +223,7 @@ public:
         float y = origin.y;
         std::vector<float> vals;
         for (int l = 0; l < h.size(); ++l) {
-            y += layer_size[l];
+            y += layer_size[l]/2;
             h.layer_pos[l] = y;
             for (auto u : h.layers[l]) {
 #ifdef DEBUG_COORDINATE
@@ -244,7 +244,7 @@ public:
 #endif
                 nodes[u].size = h.g.node_size(u);
             }
-            y += layer_size[l] + attr.layer_dist;
+            y += layer_size[l]/2 + attr.layer_dist;
         }
 
         float width;
@@ -290,7 +290,9 @@ public:
     }
 
     float normalize(const detail::hierarchy& h, float start) {
-        float min = 0, max = 0;
+        float min = std::numeric_limits<float>::max();
+        float max = std::numeric_limits<float>::lowest();
+
         for(auto u : h.g.vertices()) {
             if (nodes[u].pos.x + boxes[u].size.x - boxes[u].center.x > max) {
                 max = nodes[u].pos.x + boxes[u].size.x - boxes[u].center.x;
@@ -303,7 +305,7 @@ public:
         for(auto u : h.g.vertices()) {
             nodes[u].pos.x = start + nodes[u].pos.x - min;
         }
-        return max - min;
+        return max - min + start;
     }
 
     void normalize(const detail::hierarchy& h, detail::vertex_map< std::optional<float> >& pos, float start) {
@@ -535,6 +537,7 @@ public:
             case orient::lower_right:
                 return orient::lower_left;      
         }
+        assert(false);
     }
     
     

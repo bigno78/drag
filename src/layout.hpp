@@ -65,6 +65,7 @@ public:
 
         // get rid of the dummy nodes
         nodes.resize(original_size);
+        size += vec2{ defaults::margin, defaults::margin };
         //init_nodes();
     }
 
@@ -85,6 +86,7 @@ public:
 
     float width() const { return size.x; }
     float height() const { return size.y; }
+    vec2 dimensions() const { return size; } 
 
 private:
 

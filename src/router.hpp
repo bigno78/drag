@@ -17,22 +17,31 @@ struct edge_router {
 };
 
 class router : public edge_router {
+    const float min_sep = 5;
+    float min_shift;
+
     std::vector<node>& nodes;
     std::vector<link>& links;
 
     vertex_map< std::array< float, 4 > > angles;
-    vertex_map< std::array< float, 4 > > bound; 
+    vertex_map< std::array< float, 4 > > bound;
+
+    vertex_map< std::array< float, 2> > shifts;
 
 public:
     router(std::vector<node>& nodes, std::vector<link>& links) : nodes(nodes), links(links) {}
 
     void run(hierarchy& h, const rev_edges& rev) override {
-        angles.init(h.g, { 90, 90, 90, 90 });
-        bound.init(h.g, { 0 });
+        angles.init( h.g, { 90, 90, 90, 90 } );
+        bound.init( h.g, { 0 } );
+        shifts.init( h.g, { 0 } );
+        min_shift = h.g.node_size()/2;
+
+        set_dummy_shifts(h);
 
         for (auto u : h.g.vertices()) {
             for (auto v : h.g.out_neighbours(u)) {
-                if (!h.g.is_dummy(u) && !h.g.is_dummy(v)) update_angles(h, {u, v});
+                if (!h.g.is_dummy(u) || !h.g.is_dummy(v)) update_angles(h, {u, v});
             }
         }
 
@@ -43,27 +52,117 @@ public:
         }
 
         for (auto u : rev.loops) {
-            make_loop(h.g, u);
+            make_loop_square(h.g, u);
         }
     }
 
 private:
 
+    void set_dummy_shifts(const hierarchy& h) {
+        for (int layer_idx = 0; layer_idx < h.size(); ++layer_idx) {
+            const auto& l = h.layers[layer_idx];
+            int j = -1;
+            for (int i = 0; i < l.size(); ++i) {
+                if ( !h.g.is_dummy(l[i]) ) {
+                    calculate_block_shifts(h, layer_idx, j + 1, i - 1);
+                    j = i; 
+                }
+            }
+            calculate_block_shifts(h, layer_idx, j + 1, l.size() - 1);
+        }
+    }
+
+    void calculate_block_shifts(const hierarchy& h, int layer, int start, int end) {
+        if (end < start)
+            return;
+        
+        const auto& l = h.layers[layer];
+        float up_max = 0;
+        float bot_max = 0;
+
+        std::optional<vertex_t> left;
+        if (h.has_prev(l[start])) left = h.prev(l[start]);
+
+        std::optional<vertex_t> right;
+        if (h.has_next(l[end])) right = h.next(l[end]);
+
+        assert( ((!left || !h.g.is_dummy(*left)) && (!right || !h.g.is_dummy(*right))) );
+
+        for (int i = start; i <= end; ++i) {
+            assert( h.g.is_dummy(l[i]) );
+
+            auto [ up, down ] = get_shift_bidirectional(h, left, right, l[i]);
+
+            up_max = std::max(up, up_max);
+            bot_max = std::max(down, bot_max);
+        }
+
+        for (int i = start; i <= end; ++i) {
+            shifts[l[i]][0] = up_max;
+            shifts[l[i]][1] = bot_max;
+        }
+    }
+
+    std::pair<float, float> get_shift_bidirectional(const hierarchy& h,
+                                                    std::optional<vertex_t>& left,
+                                                    std::optional<vertex_t>& right,
+                                                    vertex_t u)
+    {
+        auto lower = next(h.g, u);
+        auto upper = prev(h.g, u);
+        std::pair<float, float> res { 0, 0 };
+
+        edge e { u, upper };
+        auto xdir = get_xdir(e);
+        if (left && xdir == -1) res.first = get_shift(h, *left, e);
+        else if (right && xdir == 1) res.first = get_shift(h, *right, e);
+
+        
+        e = { u, lower };
+        xdir = get_xdir(e);
+        if (left && xdir == -1) res.second = get_shift(h, *left, e);
+        else if (right && xdir == 1) res.second = get_shift(h, *right, e);
+
+        return res;
+    }
+
+    float get_shift(const hierarchy& h, vertex_t u, edge e) {
+        auto dirs = get_dirs(pos(e.to) - pos(e.from));
+
+        float s = min_shift;
+        auto r = nodes[u].size;
+        if ( sgn(pos(u).x - pos(e.from).x) != sgn(pos(u).x - pos(e.to).x) ) {
+            vec2 shifted = pos(e.from);
+            while( s < r && line_point_dist(shifted, pos(e.to), pos(u)) <= r + min_sep) {
+                s += 1;
+                shifted = pos(e.from) + vec2{ 0, dirs.y*s };
+            }
+        }
+        if (s >= r) {
+            return r;
+        }
+        return s;
+    }
+
     /**
      * Check if the edge <e> intersects any node.
-     * If so, calculate the maximum angle without an intersection
+     * If so, calculate the maximum angle without an intersection.
      */
     void update_angles(const hierarchy& h, edge e) {
         auto dir = nodes[e.to].pos - nodes[e.from].pos;
         auto dirs = vec2{ sgn(dir.x), sgn(dir.y) };
 
-        if (dirs.x != 0)
+        if (dirs.x == 0) {
+            return;
+        }
+
+        if (!h.g.is_dummy(e.from))
             check_intersection(h, e, dirs);
 
         dirs = -dirs;
         e = reversed(e);
 
-        if (dirs.x != 0)
+        if (!h.g.is_dummy(e.from))
             check_intersection(h, e, dirs);
     }
 
@@ -91,16 +190,21 @@ private:
 
         auto from = pos(e.from);
         auto to = pos(e.to);
+        if (h.g.is_dummy(e.to) && shifts[e.to][shift_idx(-dirs)] > 0) {
+            to = to + vec2{ 0, -dirs.y*shifts[e.to][shift_idx(-dirs)] };
+        }
         auto center = pos(u);
         auto r = nodes[u].size;
 
-        while (a >= 0 && edge_intersects(from, to, center, r)) {
-            a -= 5;
+        if ( sgn(center.x - from.x) != sgn(center.x - to.x) ) {
+            while(a >= 0 && line_point_dist(from, to, center) <= r + min_sep) {
+                a -= 5;
 
-            float x = r * std::sin(to_radians(a));
-            float y = r * std::cos(to_radians(a));
+                float x = r * std::sin(to_radians(a));
+                float y = r * std::cos(to_radians(a));
 
-            from = pos(e.from) + vec2{ dirs.x*x, dirs.y*y };
+                from = pos(e.from) + vec2{ dirs.x*x, dirs.y*y };
+            }
         }
 
         if (a < 0) {
@@ -109,6 +213,10 @@ private:
         return a;
     }
 
+
+    int shift_idx(vec2 dirs) const {
+        return dirs.y == 1;
+    }
 
     /**
      * Get the index of the quadrant <dirs> points to.
@@ -119,13 +227,15 @@ private:
      *    3 | 0
      *      v
      */ 
-    int angle_idx(vec2 dirs) {
+    int angle_idx(vec2 dirs) const {
         if (dirs.x == 1)
             return dirs.y != 1;
         return 2 + (dirs.y == 1);
     }
 
-    vec2 pos(vertex_t u) { return nodes[u].pos; }
+    vec2 pos(vertex_t u) const { return nodes[u].pos; }
+    vec2 get_dirs(vec2 v) const { return { sgn(v.x), sgn(v.y) }; }
+    int get_xdir(edge e) const { return sgn(pos(e.to).x - pos(e.from).x); }
 
     // finds next vertex in the desired direction which is not a dummy vertex
     std::optional<vertex_t> next_vertex(const hierarchy& h, vertex_t u, int d) {
@@ -145,41 +255,22 @@ private:
         auto& g = h.g;
         link l{ u, v, {} };
         auto orig = edge{ u, v };
-        //std::cout << u << " " << v << "\n";
 
-        int dir = sgn(nodes[u].pos.y - nodes[v].pos.y);
-
-        // add the first one
         l.points.push_back( calculate_port(u, nodes[v].pos - nodes[u].pos) );
-/*
-        if (g.is_dummy(v)) {
-            
-            if ( ( h.has_prev(v) && edge_intersects(pos(u), pos(v), pos(h.prev(v)), nodes[h.prev(v)].size) ) || 
-                 ( h.has_next(v) && edge_intersects(pos(u), pos(v), pos(h.next(v)), nodes[h.next(v)].size) ) ) {
-                //auto new_node = g.add_dummy();
-                //nodes.push_back( { new_node, nodes[v].pos + vec2{0, -g.node_size()}, 0, "" } );
-                nodes[v].pos = nodes[v].pos + vec2{0, -g.node_size()};
-                l.points.push_back(nodes[v].pos);
-                u = v;
-                v = next(g, v);
-            }
-        }
-*/
+
         while (g.is_dummy(v)) {
+            if (shifts[v][0] > 0)
+                l.points.push_back( nodes[v].pos + vec2{ 0, -shifts[v][0] } );
+            
             l.points.push_back( nodes[v].pos );
+
+            if (shifts[v][1] > 0)
+                l.points.push_back( nodes[v].pos + vec2{ 0, shifts[v][1] } );
+
             u = v;
-            //std::cout << v << "\n";
             v = next(g, v);
         }
-/*
-        if (g.is_dummy(u)) {
-            if ( ( h.has_prev(u) && edge_intersects(pos(u), pos(v), pos(h.prev(u)), nodes[h.prev(u)].size) ) || 
-                 ( h.has_next(u) && edge_intersects(pos(u), pos(v), pos(h.prev(u)), nodes[h.prev(u)].size) ) ) {
-                nodes[u].pos = vec2{ nodes[u].pos.x, h.layer_pos[h.ranking[u]] + g.node_size() };
-                l.points.push_back(nodes[u].pos);
-            }
-        }
-*/
+
         l.points.push_back( calculate_port(v, nodes[u].pos - nodes[v].pos) );
 
         if (rev.reversed.contains(orig)) {
@@ -199,7 +290,8 @@ private:
         }
     }
 
-    bool edge_intersects(vec2 from, vec2 to, vec2 center, float r) {
+    // https://stackoverflow.com/questions/1073336/circle-line-segment-collision-detection-algorithm
+    std::optional<vec2> edge_intersects(vec2 from, vec2 to, vec2 center, float r) {
         auto d = to - from;
         auto f = from - center;
 
@@ -209,23 +301,45 @@ private:
 
         float discriminant = b*b - 4*a*c;
         if (discriminant < 0) {
-            return false;
+            return std::nullopt;
         }
 
         discriminant = sqrt(discriminant);
         float t1 = (-b - discriminant)/(2*a);
         float t2 = (-b + discriminant)/(2*a);
 
-        return (t1 >= 0 && t1 <= 1) || (t2 >= 0 && t2 <= 1);
+        if (t1 >= 0 && t1 <= 1) {
+            return { from + t1*d };
+        }
+
+        if (t2 >= 0 && t2 <= 1) {
+            return { from + t2*d };
+        }
+
+        return std::nullopt;
+    }
+
+    // http://geomalgorithms.com/a02-_lines.html
+    float line_point_dist(vec2 from, vec2 to, vec2 p) {
+        
+        auto v = to - from;
+        auto w = p - from;
+
+        float c1 = dot(w,v);
+        float c2 = dot(v,v);
+        float t = c1 / c2;
+
+        auto x = from + t*v;
+        return distance(p, x);
     }
 
     void make_loop(subgraph& g, vertex_t u) {
         link l{ u, u, {} };
         l.points.resize(5);
 
-        l.points[1] = nodes[u].pos + vec2{ nodes[u].size + defaults::loop_size/2, nodes[u].size };
+        l.points[1] = nodes[u].pos + vec2{ nodes[u].size + defaults::loop_size/2, defaults::loop_size/2 };
         l.points[2] = nodes[u].pos + vec2{ nodes[u].size + defaults::loop_size, 0 };
-        l.points[3] = nodes[u].pos + vec2{ nodes[u].size + defaults::loop_size/2, -nodes[u].size };
+        l.points[3] = nodes[u].pos + vec2{ nodes[u].size + defaults::loop_size/2, -defaults::loop_size/2 };
 
         l.points[0] = calculate_port_centered( u, l.points[1] - nodes[u].pos );
         l.points[4] = calculate_port_centered( u, l.points[3] - nodes[u].pos );
@@ -233,7 +347,34 @@ private:
         links.push_back(std::move(l));
     }
 
+    void make_loop_square(subgraph& g, vertex_t u) {
+        link l{ u, u, {} };
+        l.points.resize(4);
+
+        l.points[1] = nodes[u].pos + vec2{ nodes[u].size + 2*defaults::loop_size/4, defaults::loop_size/2 };
+        l.points[2] = nodes[u].pos + vec2{ nodes[u].size + 2*defaults::loop_size/4, -defaults::loop_size/2 };
+
+        l.points[0] = *edge_intersects( l.points[1], vec2{ nodes[u].pos.x, l.points[1].y }, nodes[u].pos, nodes[u].size );
+        l.points[3] = *edge_intersects( l.points[2], vec2{ nodes[u].pos.x, l.points[2].y }, nodes[u].pos, nodes[u].size );
+
+        links.push_back(std::move(l));
+    }
+
+    void make_loop_krezi(subgraph& g, vertex_t u) {
+        link l{ u, u, {} };
+        l.points.resize(6);
+
+        l.points[1] = nodes[u].pos + vec2{ nodes[u].size + 3*defaults::loop_size/4, defaults::loop_size/2 };
+        l.points[2] = nodes[u].pos + vec2{ nodes[u].size + 3*defaults::loop_size/4, -defaults::loop_size/2 };
+
+        l.points[0] = calculate_port_centered( u, l.points[1] - nodes[u].pos );
+        l.points[3] = calculate_port_centered( u, l.points[2] - nodes[u].pos );
+
+        links.push_back(std::move(l));
+    }
+
     vertex_t next(const subgraph& g, vertex_t u) { return *g.out_neighbours(u).begin(); }
+    vertex_t prev(const subgraph& g, vertex_t u) { return *g.in_neighbours(u).begin(); }
 
     // dir is the edge leaving from u
     vec2 calculate_port(vertex_t u, vec2 dir) {
@@ -268,12 +409,9 @@ private:
 
     vec2 calculate_port_arctan(vertex_t u, vec2 dir) {
         float angle = ( 1/(float)2 ) * ( std::atan( dir.x/256 ) );
-        //std::cout << "f(" << dir.x << ") = " << to_degrees(angle) << "\n";
 
         float x = nodes[u].size * std::sin(angle);
         float y = nodes[u].size * std::cos(angle);
-
-        //std::cout << x << " " << y << "\n";
 
         return nodes[u].pos + vec2{ x, sgn(dir.y)*y };
     }

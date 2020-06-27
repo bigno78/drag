@@ -14,6 +14,15 @@ public:
         file << "<svg xmlns=\"http://www.w3.org/2000/svg\">\n";
     }
 
+    svg_img(const std::string& filename, vec2 dims) : file(filename) {
+        file << "<svg xmlns=\"http://www.w3.org/2000/svg\"\n";
+        file << "\txmlns:xlink=\"http://www.w3.org/1999/xlink\"\n";
+        file << "\txmlns:ev=\"http://www.w3.org/2001/xml-events\"\n";
+        file << "\twidth=\"" << dims.x << "\" height=\"" << dims.y << "\"\n";
+        file << "\tviewBox=\"0.00 0.00 " << dims.x << " " << dims.y << "\">\n";
+        file << "<rect width=\"" << dims.x << "\" height=\"" << dims.y << "\" fill=\"green\" />";
+    }
+
     ~svg_img() { file << "</svg>\n"; }
 
     void draw_line(vec2 start, vec2 end, const std::string& color="black") {
@@ -58,7 +67,7 @@ public:
         }
         file << "\" ";
         file << "stroke=\"" << color << "\" ";
-        file << "/>";
+        file << "/>\n";
     }
 };
 

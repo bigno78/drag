@@ -4,7 +4,7 @@
 #include <ostream>
 
 struct vec2 {
-    double x, y;
+    float x, y;
 
     template<typename T>
     friend vec2 operator*(T a, vec2 vec) { return { a*vec.x, a*vec.y}; }
@@ -53,3 +53,7 @@ inline vec2 rotate(vec2 vec, float deg) {
 }
 
 inline float dot(vec2 u, vec2 v) { return u.x*v.x + u.y*v.y; }
+inline float distance(vec2 u, vec2 v) { 
+    auto w = v - u;
+    return sqrt( dot(w, w) );
+}

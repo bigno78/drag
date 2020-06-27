@@ -18,10 +18,14 @@ void draw_graph(const std::string& in, const std::string& out) {
 	graph g;
 	auto lbls = parse(in, g);
 
+    for (auto u : g.vertices()) {
+        g.add_edge(u, u);
+    }
+
 	sugiyama_layout l(g);
 	l.build();
 
-	svg_img img(out);
+	svg_img img(out, l.dimensions());
 	draw_to_svg(img, l/*, lbls*/);
 }
 
@@ -49,10 +53,11 @@ int main(int argc, char **argv) {
     out = argv[i];
 
     if (print_dir) {
-        auto files = dir_contents(path);
+        auto files = dir_contents(path, ".gv");
 		for (const auto& f : files) {
+            std::cout << f << "\n";
 			draw_graph(path + f, out + f + ".svg");
-            std::cout << f << " " << report::simplex::iters << "\n";
+            std::cout << report::simplex::iters << "\n";
 		}
     } else {
 		draw_graph(path, out);

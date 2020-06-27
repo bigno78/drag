@@ -23,11 +23,11 @@ struct link {
 };
 
 namespace defaults {
-    const float margin = 10;
-    const float layer_dist = 60;
+    const float margin = 15;
+    const float layer_dist = 40;
     const float node_dist = 20;
     const float node_size = 25;
-    const float loop_size = 30;
+    const float loop_size = node_size;
 
     inline int iters = 1;
     inline int forgv = 4;
