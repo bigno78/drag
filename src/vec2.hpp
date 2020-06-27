@@ -57,3 +57,5 @@ inline float distance(vec2 u, vec2 v) {
     auto w = v - u;
     return sqrt( dot(w, w) );
 }
+
+
