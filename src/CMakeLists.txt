@@ -5,8 +5,11 @@ project(bakalarka)
 #SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++17")
 
 add_library(debug_options INTERFACE)
-target_compile_options(debug_options INTERFACE -g -std=c++17 -fsanitize=address -fsanitize=undefined)
-target_link_libraries(debug_options INTERFACE -fsanitize=address -fsanitize=undefined)
+#target_compile_options(debug_options INTERFACE -g -std=c++17 -fsanitize=address -fsanitize=undefined)
+#target_link_libraries(debug_options INTERFACE -fsanitize=address -fsanitize=undefined)
+
+target_compile_options(debug_options INTERFACE -g -std=c++17)
+target_link_libraries(debug_options INTERFACE)
 
 add_library(bench_options INTERFACE)
 target_compile_options(bench_options INTERFACE -O2 -std=c++17)

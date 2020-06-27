@@ -22,6 +22,12 @@ struct link {
     std::vector< vec2 > points;
 };
 
+struct path {
+    vertex_t from, to;
+    std::vector< vec2 > points;
+    bool bidirectonal = false;
+};
+
 namespace defaults {
     const float margin = 15;
     const float layer_dist = 40;

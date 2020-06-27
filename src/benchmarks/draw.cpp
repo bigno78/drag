@@ -18,9 +18,9 @@ void draw_graph(const std::string& in, const std::string& out) {
 	graph g;
 	auto lbls = parse(in, g);
 
-    for (auto u : g.vertices()) {
+    /*for (auto u : g.vertices()) {
         g.add_edge(u, u);
-    }
+    }*/
 
 	sugiyama_layout l(g);
 	l.build();
