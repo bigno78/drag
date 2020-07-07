@@ -10,29 +10,32 @@ class svg_img {
     std::ofstream file;
 
 public:
-    svg_img(const std::string& filename) : file(filename) {
-        file << "<svg xmlns=\"http://www.w3.org/2000/svg\">\n";
-    }
 
     svg_img(const std::string& filename, vec2 dims) : file(filename) {
         file << "<svg xmlns=\"http://www.w3.org/2000/svg\"\n";
         file << "\txmlns:xlink=\"http://www.w3.org/1999/xlink\"\n";
         file << "\txmlns:ev=\"http://www.w3.org/2001/xml-events\"\n";
-        file << "\twidth=\"" << dims.x << "\" height=\"" << dims.y << "\"\n";
+        file << "\twidth=\"" << dims.x << "pt\" height=\"" << dims.y << "pt\"\n";
         file << "\tviewBox=\"0.00 0.00 " << dims.x << " " << dims.y << "\">\n";
-        file << "<rect width=\"" << dims.x << "\" height=\"" << dims.y << "\" fill=\"green\" />";
+        file << "<rect width=\"" << dims.x << "\" height=\"" << dims.y << "\" fill=\"white\" stroke=\"transparent\" />";
     }
 
     ~svg_img() { file << "</svg>\n"; }
 
-    void draw_line(vec2 start, vec2 end, const std::string& color="black") {
-        file << "<line ";
-        file << "x1=\"" << start.x << "\" ";
-        file << "y1=\"" << start.y << "\" ";
-        file << "x2=\"" << end.x << "\" ";
-        file << "y2=\"" << end.y << "\" ";
-        file << "stroke=\"" << color << "\" ";
+    void draw_polyline(std::vector<vec2> points, const std::string& color="black") {
+        file << "<polyline ";
+        file << "points=\"";
+        const char* sep = "";
+        for (auto [ x, y ] : points) {
+            file << sep << x << " " << y;
+            sep = " ";
+        }
+        file << "\" stroke=\"" << color << "\" ";
+        file << "fill=\"none\" ";
         file << "/>\n";
+        for (int i = 1; i < points.size() - 1; ++i) {
+            draw_circle(points[i], 1, "red");
+        }
     }
 
     void draw_circle(vec2 center, float r, const std::string& color="black") {
@@ -41,19 +44,19 @@ public:
         file << "cy=\"" << center.y << "\" ";
         file << "r=\"" << r << "\" ";
         file << "stroke=\"" << color << "\" ";
-        file << "stroke-width=\"2\" ";
+        file << "stroke-width=\"1\" ";
         file << "fill=\"white\" ";
         file << "/>\n";
     }
 
-    void draw_text(vec2 pos, const std::string& text, const std::string& color="black") {
+    void draw_text(vec2 pos, const std::string& text, float size, const std::string& color="black") {
         file << "<text ";
         file << "x=\"" << pos.x << "\" ";
         file << "y=\"" << pos.y << "\" ";
         file << "fill=\"" << color << "\" ";
         file << "dominant-baseline=\"middle\" ";
         file << "text-anchor=\"middle\" ";
-        file << "style=\"font-size: 14px; font-family: Times,serif;\" ";
+        file << "style=\"font-size: " << size << "; font-family: Times,serif;\" ";
         file << ">";
         file << text;
         file << "</text>\n";
@@ -74,43 +77,38 @@ public:
 void draw_arrow(svg_img& img, vec2 from, vec2 to, float size) {
     vec2 dir = from - to;
     dir = normalized(dir);
-    img.draw_polygon( { to, to + size * rotate(dir, 25), to + size * rotate(dir, -25) } );
+    img.draw_polygon( { to, to + size * rotate(dir, 20), to + size * rotate(dir, -20) } );
 }
 
 
-void draw_to_svg( svg_img& img, 
-                  const sugiyama_layout& l,
-                  const std::map<vertex_t, std::string>& labels,
-                  vec2 start = {0,0} ) 
+void draw_to_svg(svg_img& img,
+                 std::vector<node> nodes, std::vector<path> paths,
+                 float font_size,
+                 float node_size,
+                 const std::map<vertex_t, std::string>* lbls = nullptr)
 {
-    for (const auto& node : l.vertices()) {
-        img.draw_circle(start + node.pos, node.size);
-        img.draw_text(start + node.pos, labels.at( node.u ) );
+    //float font_siz = 0.5*node_size;
+    for (const auto& node : nodes) {
+        img.draw_circle(node.pos, node.size);
+        img.draw_text(node.pos, lbls ? lbls->at(node.u) : node.default_label, font_size );
     }
 
-    for (const auto& e : l.edges()) {
-        vec2 prev = *e.points.begin();
-        for (auto pos : e.points) {
-            img.draw_line(start + prev, start + pos);
-            prev = pos;
+    float arrow_size = node_size*0.4;
+    for (const auto& path : paths) {
+        img.draw_polyline(path.points);
+        draw_arrow(img, path.points[path.points.size() - 2], path.points.back(), arrow_size);
+        if (path.bidirectional) {
+            draw_arrow(img, path.points[1], path.points.front(), arrow_size);
         }
-        draw_arrow(img, start + e.points[e.points.size() - 2], start + e.points.back(), 10);
     }
 }
 
+void draw_to_svg(const std::string& file, const sugiyama_layout& l, float font_size=14) {
+    svg_img img(file, l.dimensions());
+    draw_to_svg(img, l.vertices(), l.edges(), font_size, l.get_attributes().node_size);
+}
 
-void draw_to_svg(svg_img& img, const sugiyama_layout& l, vec2 start = {0,0}) {
-    for (const auto& node : l.vertices()) {
-        img.draw_circle(start + node.pos, node.size);
-        img.draw_text(start + node.pos, node.default_label );
-    }
-
-    for (const auto& e : l.edges()) {
-        vec2 prev = *e.points.begin();
-        for (auto pos : e.points) {
-            img.draw_line(start + prev, start + pos);
-            prev = pos;
-        }
-        draw_arrow(img, start + e.points[e.points.size() - 2], start + e.points.back(), 5);
-    }
+void draw_to_svg(const std::string& file, const sugiyama_layout& l, const std::map<vertex_t, std::string>& lbls, float font_size=14) {
+    svg_img img(file, l.dimensions());
+    draw_to_svg(img, l.vertices(), l.edges(), font_size, l.get_attributes().node_size, &lbls);
 }

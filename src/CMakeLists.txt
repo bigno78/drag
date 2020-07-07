@@ -23,8 +23,13 @@ target_link_libraries(dot PRIVATE debug_options)
 add_executable(example example/example.cpp)
 target_link_libraries(example PRIVATE debug_options)
 
-add_executable(stat benchmarks/stat.cpp)
-target_link_libraries(stat PRIVATE bench_options)
+add_executable(cycl ../stats/cyclify.cpp)
+target_link_libraries(cycl PRIVATE debug_options)
+target_include_directories(cycl PRIVATE ./)
+
+add_executable(stats ../stats/stats.cpp)
+target_link_libraries(stats PRIVATE bench_options)
+target_include_directories(stats PRIVATE ./)
 
 add_executable(bench benchmarks/bench.cpp)
 target_link_libraries(bench PRIVATE bench_options)

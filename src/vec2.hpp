@@ -17,6 +17,9 @@ inline std::ostream& operator<<(std::ostream& out, vec2 v) {
     return out;
 }
 
+inline bool operator==(vec2 lhs, vec2 rhs) { return rhs.x == lhs.x && rhs.y == lhs.y; }
+inline bool operator!=(vec2 lhs, vec2 rhs) { return !(lhs == rhs); }
+
 inline vec2 operator+(vec2 lhs, vec2 rhs) { return { lhs.x + rhs.x, lhs.y + rhs.y }; }
 inline vec2 operator+(float a, vec2 rhs) { return { a + rhs.x, a + rhs.y }; }
 inline vec2 operator+(vec2 lhs, float a) { return { lhs.x + a, lhs.y + a }; }
@@ -56,6 +59,9 @@ inline float dot(vec2 u, vec2 v) { return u.x*v.x + u.y*v.y; }
 inline float distance(vec2 u, vec2 v) { 
     auto w = v - u;
     return sqrt( dot(w, w) );
+}
+inline float cross(vec2 u, vec2 v) {
+    return u.x*v.y - u.y*v.x;
 }
 
 

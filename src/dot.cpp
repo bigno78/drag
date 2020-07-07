@@ -1,10 +1,10 @@
 #include <iostream>
 #include <dirent.h>
 
-//#define DEBUG_COORDINATE
+#define DEBUG_COORDINATE
 //#define CONTROL_CROSSING
 //#define DEBUG_CROSSING
-#define DEBUG_GRAPH
+//#define DEBUG_GRAPH
 
 #include "interface.hpp"
 #include "layout.hpp"
@@ -46,14 +46,14 @@ int main() {
                 .add_edge(1, 2).add_edge(2, 3).add_edge(3, 4)
                 .add_edge(5, 7).add_edge(6, 7).add_edge(7, 4)
                 .build();*/
-    graph g = graph_builder()
+    /*graph g = graph_builder()
                 .add_edge(0, 6).add_edge(2, 6).add_edge(3, 6).add_edge(6, 7)
                 .add_edge(7, 9).add_edge(4, 5).add_edge(5, 9)
                 .add_edge(1, 8).add_edge(8, 9)
-                .build();
+                .build();*/
 
-    //graph g;
-    //auto labels = parse("../../input_graphs_dot/g.11.20.gv", g); 
+    graph g;
+    auto labels = parse("rome/grafo490.40.gv", g); 
     //auto labels = parse("data/disconnected.gv", g);
 
 #if defined(CONTROL_CROSSING)
@@ -77,9 +77,8 @@ int main() {
 
     for (int i = 0; i < 4; ++i) {
         svg_img img{ "coord" + std::to_string(i) + ".svg" };
-        graph gr = g;
         produce_layout = i;
-        sugiyama_layout layout(gr);
+        sugiyama_layout layout(g);
         layout.build();
         draw_to_svg(img, layout);
     }

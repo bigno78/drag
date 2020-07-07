@@ -53,6 +53,24 @@ public:
             }
         }
 
+        for (auto u : g.vertices()) {
+            if (reversed_edges.reversed.data.contains(u)){
+                for (const auto& v : reversed_edges.reversed.data[u]) {
+                    g.remove_edge(v, u);
+                    g.add_edge(u, v);
+                }
+            }
+            if (reversed_edges.collapsed.data.contains(u)) {
+                for (const auto& v : reversed_edges.collapsed.data[u]) {
+                    g.remove_edge(v, u);
+                }
+            }
+        }
+
+        for (auto u : reversed_edges.loops) {
+            g.remove_edge(u, u);
+        }
+
         return reversed_edges;
     }
 
@@ -62,17 +80,13 @@ private:
         
         for (auto v : g.out_neighbours(u)) {
             if (u == v) { // a loop
-                g.remove_edge(u, u);
                 reversed_edges.loops.push_back(u);
             } else if (marks[v] == state::in_progress) { // there is a cycle
                 if (g.has_edge(v, u)) { // two-cycle
                     std::cout << edge{u,v} << "\n";
-                    g.remove_edge(u, v);
                     reversed_edges.collapsed.insert({ v, u });
                 } else { // regular cycle
                     std::cout << edge{u,v} << " reg\n";
-                    g.remove_edge(u, v);
-                    g.add_edge(v, u);
                     reversed_edges.reversed.insert({ v, u });
                 }
             } else if (marks[v] == state::unvisited) {

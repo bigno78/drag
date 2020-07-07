@@ -17,16 +17,23 @@ struct node {
     std::string default_label;
 };
 
-struct link {
-    vertex_t from, to;
-    std::vector< vec2 > points;
-};
 
 struct path {
     vertex_t from, to;
     std::vector< vec2 > points;
-    bool bidirectonal = false;
+    bool bidirectional = false;
 };
+
+
+struct attributes {
+    float node_size = 25;
+    float node_dist = 20;
+    float layer_dist = 40;
+    float loop_angle = 60;
+    float loop_size = node_size;
+    float margin = 15;
+};
+
 
 namespace defaults {
     const float margin = 15;

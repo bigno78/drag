@@ -17,14 +17,14 @@ struct edge_router {
 };
 
 class router : public edge_router {
-    const float loop_angle = 60;
-    const float min_sep = 2;
+    const float min_sep = 5;
     const float loop_angle_sep = 5;
     float loop_height;
     float min_shift;
-
+    
+    const attributes& attr;
     std::vector<node>& nodes;
-    std::vector<link>& links;
+    std::vector<path>& links;
 
     vertex_map< std::array< float, 4 > > angles;
     vertex_map< std::array< float, 4 > > bound;
@@ -34,7 +34,10 @@ class router : public edge_router {
     vertex_map< bool > loop;
 
 public:
-    router(std::vector<node>& nodes, std::vector<link>& links) : nodes(nodes), links(links) {}
+    router(std::vector<node>& nodes, std::vector<path>& paths, const attributes& attr) 
+        : attr(attr)
+        , nodes(nodes)
+        , links(paths) {}
 
     void run(hierarchy& h, const rev_edges& rev) override {
         angles.init( h.g, { 90, 90, 90, 90 } );
@@ -77,19 +80,6 @@ public:
     }
 
 private:
-    void set_regular_shifts(const hierarchy& h, edge e) {
-        auto dirs = get_dirs(e);
-        if (dirs.x == 0)
-            return;
-
-        // check the current direction
-        if (!h.g.is_dummy(e.from))
-            set_reg_shift(h, e, dirs);
-
-        // chcek the reversed direction
-        if (!h.g.is_dummy(e.to))
-            set_reg_shift(h, reversed(e), -dirs);
-    }
 
     void set_regular_shifts2(const hierarchy& h, edge e) {
         auto dirs = get_dirs(e);
@@ -98,20 +88,6 @@ private:
         set_reg_shift2(h, e, dirs);
     }
 
-    void set_reg_shift(const hierarchy& h, edge e, vec2 dirs) {
-        check_loop(e);
-        
-        auto nxt = next_non_dummy(h, e.from, dirs.x);
-        if (nxt) 
-            set_shift(h, e, *nxt, dirs);
-
-        // if there is one check the adjacent dummy
-        if ( !nxt || h.pos[e.from] + dirs.x != h.pos[*nxt] ) {
-            nxt = next_vertex(h, e.from, dirs.x);
-            if (nxt)
-                set_shift(h, e, *nxt, dirs);
-        }
-    }
 
     void set_reg_shift2(const hierarchy& h, edge e, vec2 dirs) {
         check_loop(e);
@@ -128,37 +104,6 @@ private:
         set_shift2(h, e, up_d, down_d, dirs);
     }
 
-    void set_shift(const hierarchy& h, edge e, vertex_t u, vec2 dirs) {
-        float s = get_shift(e.from, dirs);
-        auto from = pos(e.from) + vec2{ 0, dirs.y*s };
-        auto to = get_center(e.to, -dirs);
-        auto center = pos(u);
-        auto r = nodes[u].size;
-        if (h.g.is_dummy(u)) {
-            r = shifts[u][angle_idx(dirs)];
-        }
-
-        // if it is possible for the edge to intersect the vertex
-        if ( sgn(center.x - from.x) != sgn(center.x - to.x) ) {
-            float s = get_shift(e.from, dirs);
-            from = pos(e.from) + vec2{ 0, dirs.y*s };
-
-            bool update = false;
-            while(s <= nodes[u].size && line_point_dist(from, to, center) <= r + min_sep) {
-                s += 5;
-                from = pos(e.from) + vec2{ 0, dirs.y*s };
-                update = true;
-            }
-
-            // clip it
-            if (s > nodes[u].size)
-                s = nodes[u].size;
-
-            if (update)
-                shifts[e.from][angle_idx(dirs)] = s;
-        }
-    }
-
     void set_shift2(const hierarchy& h, edge e, std::optional<vertex_t> up, std::optional<vertex_t> down, vec2 dirs) {
         auto from = get_center(e.from, dirs);
         auto to = get_center(e.to, -dirs);
@@ -167,20 +112,20 @@ private:
         float r_up = 0;
         if (up) {
             c_up = pos(*up);
-            r_up = h.g.is_dummy(*up) ? shifts[*up][angle_idx(dirs)] : nodes[*up].size;
+            r_up = h.g.is_dummy(*up) ? shifts[*up][angle_idx(dirs)] : attr.node_size;
         }
 
         vec2 c_down = pos(e.from) - dirs.x*10;
         float r_down = 0;
         if (down) {
             c_down = pos(*down);
-            r_down = h.g.is_dummy(*down) ? shifts[*down][angle_idx(-dirs)] : nodes[*down].size;
+            r_down = h.g.is_dummy(*down) ? shifts[*down][angle_idx(-dirs)] : attr.node_size;
         }
 
         bool can_inter_up = sgn(c_up.x - from.x) != sgn(c_up.x - to.x);
         bool can_inter_down = sgn(c_down.x - from.x) != sgn(c_down.x - to.x);
 
-        float node_size = h.g.is_dummy(e.to) ? nodes[e.from].size : nodes[e.to].size;
+        float node_size = attr.node_size;
 
         // if it is possible for the edge to intersect the vertex
         if ( can_inter_up || can_inter_down ) {
@@ -259,125 +204,29 @@ private:
             shifts[l[i]][2] = s[2];
             shifts[l[i]][3] = s[3];
         }
+
+        fix_reg_ends(h, layer, start, end);
     }
 
-    void set_shift_bidirectional(const hierarchy& h,
-                                 std::optional<vertex_t>& left,
-                                 std::optional<vertex_t>& right,
-                                 vertex_t u)
-    {
-        auto lower = next(h.g, u);
-        auto upper = prev(h.g, u);
+    void fix_reg_ends(const hierarchy& h, int layer, int start, int end) {
+        const auto& l = h.layers[layer];
 
-        edge e { u, upper };
-        auto dirs = get_dirs(e);
-        if (left && dirs.x == -1) set_shift(h, e, *left, dirs);
-        else if (right && dirs.x == 1) set_shift(h, e, *right, dirs);
-
-        
-        e = { u, lower };
-        dirs = get_dirs(e);
-        if (left && dirs.x == -1) set_shift(h, e, *left, dirs);
-        else if (right && dirs.x == 1) set_shift(h, e, *right, dirs);
-    }
-
-    float get_shift(const hierarchy& h, vertex_t u, edge e) {
-        auto dirs = get_dirs(pos(e.to) - pos(e.from));
-
-        float s = min_shift;
-        auto r = nodes[u].size;
-        if ( sgn(pos(u).x - pos(e.from).x) != sgn(pos(u).x - pos(e.to).x) ) {
-            vec2 shifted = pos(e.from);
-            while( s < r && line_point_dist(shifted, pos(e.to), pos(u)) <= r + min_sep) {
-                s += 1;
-                shifted = pos(e.from) + vec2{ 0, dirs.y*s };
+        if (h.has_prev(l[start])) {
+            auto u = h.prev(l[start]);
+            for (auto v : h.g.neighbours(u)) {
+                auto dirs = get_dirs(edge{u, v});
+                if (dirs.x != 0)
+                    set_reg_shift2(h, { u, v }, dirs);
             }
         }
-        if (s >= r) {
-            return r;
-        }
-        return s;
-    }
 
-    /**
-     * Check if the edge <e> intersects any node.
-     * If so, calculate the maximum angle without an intersection.
-     */
-    void update_angles(const hierarchy& h, edge e) {
-        auto dir = nodes[e.to].pos - nodes[e.from].pos;
-        auto dirs = vec2{ sgn(dir.x), sgn(dir.y) };
-
-        if (dirs.x == 0) {
-            return;
-        }
-
-        if (!h.g.is_dummy(e.from))
-            check_intersection(h, e, dirs);
-
-        dirs = -dirs;
-        e = reversed(e);
-
-        if (!h.g.is_dummy(e.from))
-            check_intersection(h, e, dirs);
-    }
-
-    /**
-     * Check if <e> intersects the node closes to <e.from>.
-     * If it does, calculate the maximum angle without an interrsection.
-     */
-    void check_intersection(const hierarchy& h, edge e, vec2 dirs) {
-        check_loop(e);
-        auto nxt = next_non_dummy(h, e.from, dirs.x);
-        if (nxt) {
-            update_angle(h, e, *nxt, dirs);
-        }
-        if ( (!nxt || h.pos[e.from] + dirs.x != h.pos[*nxt]) ) {
-            nxt = next_vertex(h, e.from, dirs.x);
-            if (nxt) {
-                update_angle(h, e, *nxt, dirs);
+        if (h.has_next(l[end])) {
+            auto u = h.next(l[end]);
+            for (auto v : h.g.neighbours(u)) {
+                auto dirs = get_dirs(edge{u, v});
+                if (dirs.x != 0)
+                    set_reg_shift2(h, { u, v }, dirs);
             }
-        }
-    }
-
-    /**
-     * Find the maximum angle such that <e> does not intersect <u>.
-     */
-    void update_angle(const hierarchy& h, edge e, vertex_t u, vec2 dirs) {
-        int a = 90;
-
-        auto from = pos(e.from);
-        auto to = pos(e.to);
-        if (h.g.is_dummy(e.to) && shifts[e.to][angle_idx(-dirs)] > 0) {
-            to = to + vec2{ 0, -dirs.y*shifts[e.to][angle_idx(-dirs)] };
-        }
-        auto center = pos(u);
-        auto r = nodes[u].size;
-        if (h.g.is_dummy(u) && shifts[u][angle_idx(-dirs)] > 0) {
-            r = shifts[u][angle_idx(-dirs)];
-        }
-
-        if ( sgn(center.x - from.x) != sgn(center.x - to.x) ) {
-            float a = mapped_angle(e, dirs);
-            if (a >= 90) {
-                a = centered_angle(e);
-            }
-
-            bool update = false;
-            while(a >= 0 && line_point_dist(from, to, center) <= r + min_sep) {
-                a -= 5;
-
-                float x = r * std::sin(to_radians(a));
-                float y = r * std::cos(to_radians(a));
-
-                from = pos(e.from) + vec2{ dirs.x*x, dirs.y*y };
-                update = true;
-            }
-
-            if (a < 0)
-                a = 0;
-
-            if (update)
-                remap_angle(e, a, dirs);
         }
     }
 
@@ -392,8 +241,8 @@ private:
         auto intersection = *edge_intersects(from, to, nodes[e.from].pos, nodes[e.from].size);
         float a = angle(pos(e.from), intersection);
 
-        if (a > loop_angle - loop_angle_sep) {
-            a = loop_angle - loop_angle_sep;
+        if (a > attr.loop_angle - loop_angle_sep) {
+            a = attr.loop_angle - loop_angle_sep;
             auto p = angle_point(a, e.from, dirs);
 
             float t = (pos(e.from).x - p.x)/(p.x - to.x);
@@ -409,17 +258,6 @@ private:
         return nodes[u].pos + vec2{ 0, dirs.y*get_shift(u, dirs) };
     }
 
-    float mapped_angle(edge e, vec2 dirs) {
-        float a = angles[e.from][angle_idx(dirs)];
-        if (a < 90) {
-            auto center_x = pos(e.from).x;
-            auto max_x = bound[e.from][angle_idx(dirs)];
-            auto dir = pos(e.to) - pos(e.from);
-            return a*abs(dir.x)/abs(center_x - max_x);
-        }
-        return 90;
-    }
-
     float centered_angle(edge e) {
         auto dir = pos(e.to) - pos(e.from);
         return to_degrees( std::atan(fabs(dir.x)/fabs(dir.y)) );
@@ -428,11 +266,6 @@ private:
     float angle(vec2 from, vec2 to) {
         auto dir = to - from;
         return to_degrees( std::atan(fabs(dir.x)/fabs(dir.y)) );
-    }
-
-    void remap_angle(edge e, float a, vec2 dirs) {
-        angles[e.from][angle_idx(dirs)] = a;
-        bound[e.from][angle_idx(dirs)] = pos(e.to).x;
     }
 
 
@@ -486,7 +319,7 @@ private:
 
     void make_path(hierarchy& h, const rev_edges& rev, vertex_t u, vertex_t v) {
         auto& g = h.g;
-        link l{ u, v, {} };
+        path l{ u, v, {} };
         auto orig = edge{ u, v };
 
         l.points.push_back( calculate_port_shifted(u, nodes[v].pos - nodes[u].pos) );
@@ -508,18 +341,18 @@ private:
         }
 
         l.points.push_back( calculate_port_shifted(v, nodes[u].pos - nodes[v].pos) );
+        l.to = v;
 
         if (rev.reversed.contains(orig)) {
             reverse(l);
         } else if (rev.collapsed.contains(orig)) {
-            links.push_back(l);
-            reverse(links.back());
+            l.bidirectional = true;
         }
 
         links.push_back(std::move(l));
     }
 
-    void reverse(link& l) {
+    void reverse(path& l) {
         std::swap(l.from, l.to);
         for (int i = 0; i < l.points.size()/2; ++i) {
             std::swap(l.points[i], l.points[l.points.size() - i - 1]);
@@ -569,49 +402,22 @@ private:
         return distance(p, x);
     }
 
-    void make_loop(subgraph& g, vertex_t u) {
-        link l{ u, u, {} };
-        l.points.resize(5);
-
-        l.points[1] = nodes[u].pos + vec2{ nodes[u].size + defaults::loop_size/2, defaults::loop_size/2 };
-        l.points[2] = nodes[u].pos + vec2{ nodes[u].size + defaults::loop_size, 0 };
-        l.points[3] = nodes[u].pos + vec2{ nodes[u].size + defaults::loop_size/2, -defaults::loop_size/2 };
-
-        l.points[0] = calculate_port_centered( u, l.points[1] - nodes[u].pos );
-        l.points[4] = calculate_port_centered( u, l.points[3] - nodes[u].pos );
-
-        links.push_back(std::move(l));
-    }
-
     void make_loop_square(subgraph& g, vertex_t u) {
-        link l{ u, u, {} };
+        path l{ u, u, {} };
         l.points.resize(4);
 
-        l.points[0] = angle_point(loop_angle, u, { 1, -1 });
-        l.points[3] = angle_point(loop_angle, u, { 1, 1 });
+        l.points[0] = angle_point(attr.loop_angle, u, { 1, -1 });
+        l.points[3] = angle_point(attr.loop_angle, u, { 1, 1 });
 
-        l.points[1] = vec2{ pos(u).x + nodes[u].size + defaults::loop_size/2, l.points[0].y };
-        l.points[2] = vec2{ pos(u).x + nodes[u].size + defaults::loop_size/2, l.points[3].y };
-
-        links.push_back(std::move(l));
-    }
-
-    void make_loop_krezi(subgraph& g, vertex_t u) {
-        link l{ u, u, {} };
-        l.points.resize(6);
-
-        l.points[1] = nodes[u].pos + vec2{ nodes[u].size + 3*defaults::loop_size/4, defaults::loop_size/2 };
-        l.points[2] = nodes[u].pos + vec2{ nodes[u].size + 3*defaults::loop_size/4, -defaults::loop_size/2 };
-
-        l.points[0] = calculate_port_centered( u, l.points[1] - nodes[u].pos );
-        l.points[3] = calculate_port_centered( u, l.points[2] - nodes[u].pos );
+        l.points[1] = vec2{ pos(u).x + attr.node_size + attr.loop_size/2, l.points[0].y };
+        l.points[2] = vec2{ pos(u).x + attr.node_size + attr.loop_size/2, l.points[3].y };
 
         links.push_back(std::move(l));
     }
 
     vec2 angle_point(float angle, vertex_t u, vec2 dirs) {
-        return pos(u) + vec2{ dirs.x * nodes[u].size * std::sin(to_radians(angle)),
-                              dirs.y * nodes[u].size * std::cos(to_radians(angle)) };
+        return pos(u) + vec2{ dirs.x * attr.node_size * std::sin(to_radians(angle)),
+                              dirs.y * attr.node_size * std::cos(to_radians(angle)) };
     }
 
     vertex_t next(const subgraph& g, vertex_t u) { return *g.out_neighbours(u).begin(); }
@@ -621,29 +427,6 @@ private:
         vec2 dirs { sgn(dir.x), sgn(dir.y) };
         auto center = get_center(u, dirs);
         return *edge_intersects(center, center + dir, pos(u), nodes[u].size);
-    }
-
-    // dir is the edge leaving from u
-    vec2 calculate_port(vertex_t u, vec2 dir) {
-        vec2 dirs { sgn(dir.x), sgn(dir.y) };
-        auto a = angles[u][angle_idx(dirs)];
-
-        if (a < 90) {
-            std::cout << u << " angler:" << a << "\n";
-            auto max_x = bound[u][angle_idx(dirs)];
-            auto center_x = pos(u).x;
-
-            float angle = a*abs(dir.x)/abs(center_x - max_x);
-            std::cout << angle << "\n";
-
-            angle = to_radians(angle);
-            float x = dirs.x * nodes[u].size * std::sin(angle);
-            float y = dirs.y * nodes[u].size * std::cos(angle);
-
-            return nodes[u].pos + vec2{ x, y };
-        }
-
-        return calculate_port_centered(u, dir);
     }
 
     vec2 calculate_port_centered(vertex_t u, vec2 dir) {

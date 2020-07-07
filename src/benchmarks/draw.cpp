@@ -6,6 +6,7 @@
 #include "../svg.hpp"
 #include "../parser.hpp"
 #include "../report.hpp"
+#include "../test/test-utils.hpp"
 
 #include <iostream>
 #include <string>
@@ -15,18 +16,13 @@ void print_usage() {
 }
 
 void draw_graph(const std::string& in, const std::string& out) {
-	graph g;
-	auto lbls = parse(in, g);
+    attributes attr;
+    std::map<vertex_t, std::string> lbls;
+    float font_size;
+	auto g = parse(in, lbls, attr, font_size);
 
-    /*for (auto u : g.vertices()) {
-        g.add_edge(u, u);
-    }*/
-
-	sugiyama_layout l(g);
-	l.build();
-
-	svg_img img(out, l.dimensions());
-	draw_to_svg(img, l/*, lbls*/);
+	sugiyama_layout l(g, attr);
+	draw_to_svg(out, l/*, lbls, font_size*/);
 }
 
 int main(int argc, char **argv) {
@@ -57,7 +53,7 @@ int main(int argc, char **argv) {
 		for (const auto& f : files) {
             std::cout << f << "\n";
 			draw_graph(path + f, out + f + ".svg");
-            std::cout << report::simplex::iters << "\n";
+            //std::cout << report::simplex::iters << "\n";
 		}
     } else {
 		draw_graph(path, out);

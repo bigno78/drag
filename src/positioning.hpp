@@ -51,10 +51,10 @@ struct test_positioning : public positioning {
         for (auto layer : h.layers) {
             float x = origin.x;
             for (auto u : layer) {
-                x += attr.node_dist + h.g.node_size(u);
+                x += attr.node_dist + h.g.node_size();
                 nodes[u].pos = { x, y };
-                nodes[u].size = h.g.node_size(u);
-                x += h.g.node_size(u);
+                nodes[u].size = h.g.node_size();
+                x += h.g.node_size();
             }
             if ((x - origin.x) > width) {
                 width = x;
@@ -79,7 +79,7 @@ struct bounding_box {
 class fast_and_simple_positioning : public positioning {
 public:
     std::vector<node>& nodes;
-    positioning_attributes attr;
+    attributes attr;
     const detail::vertex_map<bounding_box>& boxes;
 
     detail::vertex_map< std::pair<vertex_t, vertex_t> > upper_medians;
@@ -102,7 +102,7 @@ public:
     edge_set conflicting;
 
 
-    fast_and_simple_positioning(positioning_attributes attr, 
+    fast_and_simple_positioning(attributes attr, 
                                 std::vector<node>& nodes,
                                 const detail::vertex_map<bounding_box>& boxes, 
                                 const graph& g)
@@ -129,7 +129,7 @@ public:
                 root[j][u] = u;
                 align[j][u] = u;
                 sink[j][u] = u;
-                nodes[u].size = h.g.node_size(u);
+                nodes[u].size = h.g.node_size();
             }
         }
 
@@ -242,7 +242,7 @@ public:
 #ifdef DEBUG_COORDINATE
                 }
 #endif
-                nodes[u].size = h.g.node_size(u);
+                nodes[u].size = attr.node_size;
             }
             y += layer_size[l]/2 + attr.layer_dist;
         }

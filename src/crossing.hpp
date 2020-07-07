@@ -126,6 +126,7 @@ public:
 
         int base = min_cross;
         for (int i = 0; i < max_iters; ++i) {
+            barycenter(h, 0);
             reduce(h, base);
             if (i != max_iters - 1) {
                 for (auto& l : h.layers) {
@@ -205,11 +206,24 @@ private:
 #endif
     }
 
+    void barycenter(hierarchy& h, int i) {
+        vertex_map<float> weights(h.g);
+        if (i % 2 == 0) { // top to bottom
+            for (int j = 1; j < h.size(); ++j) {
+                reorder_layer(h, weights, j, true);
+            }
+        } else { // from bottom up
+            for (int j = h.size() - 2; j >= 0; --j) {
+                reorder_layer(h, weights, j, false);
+            }
+        }
+    }
+
     // reorders vertices on a layer 'i' based on their weights
     void reorder_layer(hierarchy& h, vertex_map<float>& weights, int i, bool downward) {
         auto& layer = h.layers[i];
         for (vertex_t u : layer) {
-            weights[u] = weight( h.pos, u, downward ? h.g.in_neighbours(u) : h.g.out_neighbours(u) );
+                weights[u] = weight( h.pos, u, downward ? h.g.in_neighbours(u) : h.g.out_neighbours(u) );
         }
         std::sort(layer.begin(), layer.end(), [&weights] (const auto& u, const auto& v) {
             return weights[u] < weights[v];

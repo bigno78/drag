@@ -4,50 +4,92 @@
 #include <string>
 #include <map>
 #include <sstream>
+#include <stdexcept>
 
 #include "graph.hpp"
+#include "types.hpp"
+
+float to_pt(float x) {
+	return x*72;
+}
 
 bool contains(const std::map<std::string, vertex_t>& nodes, const std::string& n) {
     return nodes.count(n) > 0;
 }
 
-std::map<vertex_t, std::string> parse(const std::string& file, graph& g) {
+std::string read_word(std::istream& in) {
+    std::string word;
+    while( in && std::isalnum(in.peek()) ) {
+        word.push_back( in.get() );
+    }
+
+    if (word.empty()) {
+        throw std::invalid_argument("Expected a word.");
+    }
+
+    return word;
+}
+
+float read_float(std::istream& in) {
+    float x;
+    in >> x;
+    if (!in) {
+        throw std::invalid_argument("Expected a float.");
+    }
+    return x;
+}
+
+graph parse(const std::string& file, std::map<vertex_t, std::string>& labels, attributes& attr, float& font_size) {
     std::ifstream in(file);
 
     if (!in) {
-        std::cerr << "Failed to open '" << file << "'\n";
+        //std::cerr << "Failed to open '" << file << "'\n";
+        throw std::invalid_argument("Failed to open '" + file + "'.");
     }
 
+    graph g;
     std::map<std::string, vertex_t> nodes;
-    std::map<vertex_t, std::string> labels;
 
     std::string line;
     while ( std::getline(in, line) ) {
         std::stringstream line_stream(line);
-        std::string tail, head, sep;
 
-        line_stream >> tail >> sep >> head;
-        if (!line_stream || sep != "->") {
-            //std::cout << "discarding: " << line << "\n";
+        line_stream >> std::ws;
+        if (!std::isalpha(line_stream.peek()))
             continue;
-        }
-        if (head.back() == ';') {
-            head.pop_back();
-        }
+        std::string first = read_word(line_stream);
+        line_stream >> std::ws;
 
-        if (!contains(nodes, tail)) {
-            auto u = g.add_node();
-            nodes.insert( { tail, u } );
-            labels.insert( { u, tail } );  
-        }
-        if (!contains(nodes, head)) {
-            auto u = g.add_node();
-            nodes.insert( { head, u } );
-            labels.insert( { u, head } );   
-        }
+        char a = line_stream.get();
+        if (a == '=') {
+            line_stream >> std::ws;
+            if (first == "ranksep") {
+                attr.layer_dist = to_pt(read_float(line_stream));
+            } else if (first == "nodesep") {
+                attr.node_dist = to_pt(read_float(line_stream));
+            } else if (first == "nodesize") {
+                attr.node_size = to_pt(read_float(line_stream))/2;
+            } else if (first == "fontsize") {
+                font_size = read_float(line_stream);
+            }
+        } else if (a == '-' && line_stream.get() == '>') {
+            line_stream >> std::ws;
+            std::string second = read_word(line_stream);
+            //std::cout << first << " -> " << second << "\n";
 
-        //std::cout << "adding: " << tail << "[" << nodes[tail] << "] -> " << head << "[" << nodes[head] << "]\n";
-        g.add_edge(nodes[tail], nodes[head]);
+            if (!contains(nodes, second)) {
+                auto u = g.add_node();
+                nodes.insert( { second, u } );
+                labels.insert( { u, second } );  
+            }
+            if (!contains(nodes, first)) {
+                auto u = g.add_node();
+                nodes.insert( { first, u } );
+                labels.insert( { u, first } );   
+            }
+
+            g.add_edge(nodes[first], nodes[second]);
+        }
     }
-    return labels;
+    return g;
 }

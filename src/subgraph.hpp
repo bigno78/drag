@@ -60,20 +60,18 @@ public:
     void add_edge(edge e) { m_source.add_edge(e.from, e.to); }
     void add_edge(vertex_t u, vertex_t v) { add_edge( { u, v } ); }
 
-    vertex_t add_dummy(float size) { 
-        auto u = m_source.add_node(size);
+    vertex_t add_dummy() { 
+        auto u = m_source.add_node();
         m_vertices.push_back(u);
         return u;
     }
-    vertex_t add_dummy() { return add_dummy(0); }
 
     bool is_dummy(vertex_t u) const { return u >= m_dummy_border; }
 
     void remove_edge(edge e) { m_source.remove_edge(e.from, e.to); }
     void remove_edge(vertex_t u, vertex_t v) { remove_edge( { u, v } ); }
 
-    float node_size(vertex_t u) const { return m_source.node_size(u); }
-    float node_size() const { return m_source.default_size(); }
+    float node_size() const { return m_source.node_size(); }
 
     bool has_edge(edge e) const { 
         auto out = out_neighbours(e.from);
