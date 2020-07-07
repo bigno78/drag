@@ -6,21 +6,33 @@
 #include "vec2.hpp"
 #include "layout.hpp"
 
+struct drawing_options {
+    std::map<vertex_t, std::string> labels;
+    float font_size = 12;
+    bool use_labels = false;
+};
+
 class svg_img {
     std::ofstream file;
 
 public:
 
     svg_img(const std::string& filename, vec2 dims) : file(filename) {
+        float w = dims.x + 2*defaults::margin;
+        float h = dims.y + 2*defaults::margin;
         file << "<svg xmlns=\"http://www.w3.org/2000/svg\"\n";
         file << "\txmlns:xlink=\"http://www.w3.org/1999/xlink\"\n";
         file << "\txmlns:ev=\"http://www.w3.org/2001/xml-events\"\n";
-        file << "\twidth=\"" << dims.x << "pt\" height=\"" << dims.y << "pt\"\n";
-        file << "\tviewBox=\"0.00 0.00 " << dims.x << " " << dims.y << "\">\n";
-        file << "<rect width=\"" << dims.x << "\" height=\"" << dims.y << "\" fill=\"white\" stroke=\"transparent\" />";
+        file << "\twidth=\"" << w << "pt\" height=\"" << h << "pt\"\n";
+        file << "\tviewBox=\"0.00 0.00 " << w << " " << h << "\">\n";
+        file << "<rect width=\"" << w << "\" height=\"" << h << "\" fill=\"white\" stroke=\"transparent\" />";
+        file << "<g transform=\"scale(1 1) rotate(0) translate(" << defaults::margin << " " << defaults::margin << ")\">";
     }
 
-    ~svg_img() { file << "</svg>\n"; }
+    ~svg_img() { 
+        file << "</g>\n";
+        file << "</svg>\n";
+    }
 
     void draw_polyline(std::vector<vec2> points, const std::string& color="black") {
         file << "<polyline ";
@@ -56,7 +68,7 @@ public:
         file << "fill=\"" << color << "\" ";
         file << "dominant-baseline=\"middle\" ";
         file << "text-anchor=\"middle\" ";
-        file << "style=\"font-size: " << size << "; font-family: Times,serif;\" ";
+        file << "font-size=\"" << size << "\" font-family=\"Times,serif\" ";
         file << ">";
         file << text;
         file << "</text>\n";
@@ -74,6 +86,7 @@ public:
     }
 };
 
+
 void draw_arrow(svg_img& img, vec2 from, vec2 to, float size) {
     vec2 dir = from - to;
     dir = normalized(dir);
@@ -82,19 +95,18 @@ void draw_arrow(svg_img& img, vec2 from, vec2 to, float size) {
 
 
 void draw_to_svg(svg_img& img,
-                 std::vector<node> nodes, std::vector<path> paths,
-                 float font_size,
-                 float node_size,
-                 const std::map<vertex_t, std::string>* lbls = nullptr)
+                 const std::vector<node>& nodes,
+                 const std::vector<path>& paths,
+                 const drawing_options& opts)
 {
-    //float font_siz = 0.5*node_size;
     for (const auto& node : nodes) {
         img.draw_circle(node.pos, node.size);
-        img.draw_text(node.pos, lbls ? lbls->at(node.u) : node.default_label, font_size );
+        img.draw_text(node.pos, opts.use_labels ? opts.labels.at(node.u) : std::to_string(node.u), opts.font_size  );
     }
 
-    float arrow_size = node_size*0.4;
+    
     for (const auto& path : paths) {
+        float arrow_size = nodes[path.from].size * 0.4;
         img.draw_polyline(path.points);
         draw_arrow(img, path.points[path.points.size() - 2], path.points.back(), arrow_size);
         if (path.bidirectional) {
@@ -103,12 +115,19 @@ void draw_to_svg(svg_img& img,
     }
 }
 
-void draw_to_svg(const std::string& file, const sugiyama_layout& l, float font_size=14) {
+void draw_to_svg(const std::string& file, const sugiyama_layout& l, const drawing_options& opts) {
     svg_img img(file, l.dimensions());
-    draw_to_svg(img, l.vertices(), l.edges(), font_size, l.get_attributes().node_size);
-}
+    for (const auto& node : l.vertices()) {
+        img.draw_circle(node.pos, l.attribs().node_size);
+        img.draw_text(node.pos, opts.use_labels ? opts.labels.at(node.u) : std::to_string(node.u), opts.font_size );
+    }
 
-void draw_to_svg(const std::string& file, const sugiyama_layout& l, const std::map<vertex_t, std::string>& lbls, float font_size=14) {
-    svg_img img(file, l.dimensions());
-    draw_to_svg(img, l.vertices(), l.edges(), font_size, l.get_attributes().node_size, &lbls);
+    float arrow_size = 0.4 * l.attribs().node_size;
+    for (const auto& path : l.edges()) {
+        img.draw_polyline(path.points);
+        draw_arrow(img, path.points[path.points.size() - 2], path.points.back(), arrow_size);
+        if (path.bidirectional) {
+            draw_arrow(img, path.points[1], path.points.front(), arrow_size);
+        }
+    }
 }

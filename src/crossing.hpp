@@ -103,7 +103,7 @@ class barycentric_heuristic : public crossing_reduction {
     bool trans = defaults::trans;
 
     std::random_device dev;
-    std::mt19937 mt{ dev() };
+    std::mt19937 mt;
 
     vertex_map<int> best_order;
     int min_cross;
@@ -146,7 +146,7 @@ public:
         report::final = min_cross;
 #endif
 
-        std::cout << cross_calls << "\n";
+        //std::cout << cross_calls << "\n";
     }
 
     void set_trans(bool a) { trans = a; }

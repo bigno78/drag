@@ -425,6 +425,10 @@ private:
 
     vec2 calculate_port_shifted(vertex_t u, vec2 dir) {
         vec2 dirs { sgn(dir.x), sgn(dir.y) };
+        auto s = get_shift(u, dirs);
+        if (s == attr.node_size) {
+            return get_center(u, dirs);
+        }
         auto center = get_center(u, dirs);
         return *edge_intersects(center, center + dir, pos(u), nodes[u].size);
     }
@@ -445,6 +449,7 @@ private:
 
         return nodes[u].pos + vec2{ x, sgn(dir.y)*y };
     }
+
 };
 
 } // namespace detail

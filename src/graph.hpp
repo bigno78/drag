@@ -16,8 +16,6 @@ class graph {
     std::vector< std::vector<vertex_t> > m_out_neighbours;
     std::vector< std::vector<vertex_t> > m_in_neighbours;
 
-    float m_node_size = defaults::node_size;
-
 public:
 
     // add new node
@@ -32,8 +30,6 @@ public:
         m_in_neighbours[to].push_back(from);
         return *this;
     }
-
-    float node_size() const { return m_node_size; }
 
     unsigned size() const { return m_out_neighbours.size(); }
 

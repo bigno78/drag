@@ -8,6 +8,7 @@
 
 #include "graph.hpp"
 #include "types.hpp"
+#include "svg.hpp"
 
 float to_pt(float x) {
 	return x*72;
@@ -39,7 +40,7 @@ float read_float(std::istream& in) {
     return x;
 }
 
-graph parse(const std::string& file, std::map<vertex_t, std::string>& labels, attributes& attr, float& font_size) {
+graph parse(const std::string& file, attributes& attr, drawing_options& opts) {
     std::ifstream in(file);
 
     if (!in) {
@@ -70,7 +71,7 @@ graph parse(const std::string& file, std::map<vertex_t, std::string>& labels, at
             } else if (first == "nodesize") {
                 attr.node_size = to_pt(read_float(line_stream))/2;
             } else if (first == "fontsize") {
-                font_size = read_float(line_stream);
+                opts.font_size = read_float(line_stream);
             }
         } else if (a == '-' && line_stream.get() == '>') {
             line_stream >> std::ws;
@@ -80,15 +81,21 @@ graph parse(const std::string& file, std::map<vertex_t, std::string>& labels, at
             if (!contains(nodes, second)) {
                 auto u = g.add_node();
                 nodes.insert( { second, u } );
-                labels.insert( { u, second } );  
+                opts.labels.insert( { u, second } );  
             }
             if (!contains(nodes, first)) {
                 auto u = g.add_node();
                 nodes.insert( { first, u } );
-                labels.insert( { u, first } );   
+                opts.labels.insert( { u, first } );   
             }
 
             g.add_edge(nodes[first], nodes[second]);
+        } else if (!line_stream || a == ';') {
+            if (!contains(nodes, first)) {
+                auto u = g.add_node();
+                nodes.insert( { first, u } );
+                opts.labels.insert( { u, first } );   
+            }
         }
     }
     return g;

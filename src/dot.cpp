@@ -14,33 +14,7 @@
 
 
 
-void layout_files(const std::string& in_path, const std::string& out_path) {
-    DIR *dir;
-    struct dirent *ent;
-    if ( (dir = opendir (in_path.c_str())) != NULL ) {
-
-        while ((ent = readdir (dir)) != NULL) {
-           
-            std::string name{ ent->d_name };
-            if (name == "." || name == "..") {
-                continue;
-            }
-            //std::cout << name << "\n";
-
-            graph g;
-            auto labels = parse(in_path + name, g);
-            svg_img img(out_path + name + ".svg");
-            sugiyama_layout l(g);
-            l.build();
-            draw_to_svg(img, l, labels);
-        }
-        closedir (dir);
-    } else {
-        perror ("");
-    }
-}
-
-int main() {
+int main(int argc, char** argv) {
     /*graph g = graph_builder()
                 .add_edge(0, 1).add_edge(0, 5).add_edge(0, 6)
                 .add_edge(1, 2).add_edge(2, 3).add_edge(3, 4)
@@ -52,8 +26,9 @@ int main() {
                 .add_edge(1, 8).add_edge(8, 9)
                 .build();*/
 
-    graph g;
-    auto labels = parse("rome/grafo490.40.gv", g); 
+    attributes attr;
+    drawing_options opt;
+    auto g = parse(argv[1], attr, opt); 
     //auto labels = parse("data/disconnected.gv", g);
 
 #if defined(CONTROL_CROSSING)
@@ -76,17 +51,13 @@ int main() {
 #elif defined(DEBUG_COORDINATE)
 
     for (int i = 0; i < 4; ++i) {
-        svg_img img{ "coord" + std::to_string(i) + ".svg" };
         produce_layout = i;
-        sugiyama_layout layout(g);
-        layout.build();
-        draw_to_svg(img, layout);
+        sugiyama_layout layout(g, attr);
+        draw_to_svg("coord" + std::to_string(i) + ".svg", layout, opt);
     }
-    svg_img img{ "coord-final.svg" };
     produce_layout = 4;
-    sugiyama_layout layout(g);
-    layout.build();
-    draw_to_svg(img, layout);
+    sugiyama_layout layout(g, attr);
+    draw_to_svg("coord-final.svg", layout, opt);
 
 #elif defined(DEBUG_GRAPH)
 

@@ -173,6 +173,7 @@ std::string print(int i) {
 		case bend: 
 			return "bend";
 	}
+	assert(false);
 }
 
 struct stats {
@@ -210,43 +211,88 @@ std::tuple<float, float, float> quartiles(const std::vector<float>& data) {
 	return { low, med, up };
 }
 
-void do_stat(const std::string& in) {
-	std::array<std::vector<float>, 4> props;
-
-	auto files = dir_contents(in, ".plain");
-	for (const auto& f : files) {
-		
-		auto [ nodes, paths, dims ] = parse_plain_dot( in + "/" + f );
-
-		props[cros].push_back( get_total_cross(paths, nodes) );
-		props[len].push_back( get_total_length(paths) );
-		props[rev].push_back( get_total_reversed(paths) );
-		props[bend].push_back( get_total_bends(paths) );
-
-		std::cout << f << " " << props[cros].back() << "\n";
+void print(int i, const std::vector<float>& data) {
+	std::cout << print(i) << ":";
+	for (auto x : data) {
+		std::cout << " " << x;
 	}
+	std::cout << "\n";
+}
 
+void count_stuff(const std::vector<path>& paths, const std::vector<node>& nodes, std::array<std::vector<float>, 4>& props) {
+	props[cros].push_back( get_total_cross(paths, nodes) );
+	props[len].push_back( get_total_length(paths) );
+	props[rev].push_back( get_total_reversed(paths) );
+	props[bend].push_back( get_total_bends(paths) );
+}
+
+std::array< stats, 4 > get_stats(std::array<std::vector<float>, 4>& props) {
 	std::array< stats, 4 > res;
 
 	for (int i = 0; i < 4; ++i) {
 		auto& data = props[i];
 		std::sort(data.begin(), data.end());
 
-		stats st;
-		st.min = data.front();
-		st.max = data.back();
-		std::tie(st.lower, st.median, st.upper) = quartiles(data);
-		res[i] = st;
-		std::cout << print(i) << ": " << st << "\n";
+		res[i].min = data.front();
+		res[i].max = data.back();
+		std::tie(res[i].lower, res[i].median, res[i].upper) = quartiles(data);
+
+		std::cout << print(i) << ": " << res[i] << "\n";
 	}
+
+	//print(0, props[0]);
+
+	return res;
+}
+
+void write_stats(const std::array< stats, 4 >& s, const std::string& path, const std::string& caption) {
+	std::ofstream out { path, std::ios_base::app };
+	out << caption << "\n";
+	for (int i = 0; i < 4; ++i) {
+		out << print(i) << ": " << s[i] << "\n";
+	}
+}
+
+void do_dot_stat(const std::string& in, const std::string& log) {
+	std::array<std::vector<float>, 4> props;
+
+	auto files = dir_contents(in, ".plain");
+	for (const auto& f : files) {
+		auto [ nodes, paths, dims ] = parse_plain_dot( in + "/" + f );
+		count_stuff(paths, nodes, props);
+	}
+
+	auto stats = get_stats(props);
+	write_stats(stats, log, in + " DOT");
+}
+
+void do_my_stat(const std::string& in, const std::string& log) {
+	std::array<std::vector<float>, 4> props;
+
+	auto files = dir_contents(in, ".gv");
+	for (const auto& f : files) {
+		attributes attr;
+		drawing_options opt;
+		graph g = parse(in + "/" + f, attr, opt);
+		sugiyama_layout l(g, attr);
+
+		count_stuff(l.edges(), l.vertices(), props);
+	}
+
+	auto stats = get_stats(props);
+	write_stats(stats, log, in + " ME");
 }
 
 
 
 int main(int argc, char **argv) {
-	//do_stat(argv[1]);
+	if (std::string{argv[1]} == "--dot") {
+		do_dot_stat(argv[2], argv[3]);
+	} else {
+		do_my_stat(argv[1], argv[2]);
+	}
 
-	if (std::string{argv[1]} == "-p"){
+	/*if (std::string{argv[1]} == "-p"){
 		auto [ nodes, paths, dims ] = parse_plain_dot(argv[2]);
 
 		std::cout << "bends:     " << get_total_bends(paths) << "\n";
@@ -255,9 +301,8 @@ int main(int argc, char **argv) {
 		std::cout << "crossings: " << get_total_cross(paths, nodes) << "\n";
 	} else {
 		attributes at;
-		std::map<vertex_t, std::string> labels;
-		float size;
-		auto g = parse(argv[1], labels, at, size);
+		drawing_options opts;
+		auto g = parse(argv[1], at, opts);
 
 		sugiyama_layout l(g, at);
 
@@ -265,5 +310,5 @@ int main(int argc, char **argv) {
 		std::cout << "length:    " << get_total_length(l.edges()) << "\n";
 		std::cout << "reversed:  " << get_total_reversed(l.edges()) << "\n";
 		std::cout << "crossings: " << get_total_cross(l.edges(), l.vertices()) << "\n";
-	}
+	}*/
 }

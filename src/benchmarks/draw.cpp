@@ -11,18 +11,17 @@
 #include <iostream>
 #include <string>
 
-void print_usage() {
-    std::cout << "usage: ./draw [-d] source destination\n";
-}
-
 void draw_graph(const std::string& in, const std::string& out) {
     attributes attr;
-    std::map<vertex_t, std::string> lbls;
-    float font_size;
-	auto g = parse(in, lbls, attr, font_size);
+    drawing_options opts;
+	auto g = parse(in, attr, opts);
 
 	sugiyama_layout l(g, attr);
-	draw_to_svg(out, l/*, lbls, font_size*/);
+	draw_to_svg(out, l, opts);
+}
+
+void print_usage() {
+    std::cout << "usage: ./draw [-d] source destination\n";
 }
 
 int main(int argc, char **argv) {

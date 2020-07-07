@@ -5,13 +5,13 @@
 #include <random>
 #include <set>
 
-void dfs_sort(const graph& g, vertex_t u, std::vector<std::vector<vertex_t>>& tp) {
+void dfs_preds(const graph& g, vertex_t u, std::vector<std::vector<vertex_t>>& tp) {
 	if (!tp[u].empty()) {
 		return;
 	}
 
 	for (auto v : g.in_neighbours(u)) {
-		dfs_sort(g, v, tp);
+		dfs_preds(g, v, tp);
 		for (auto x : tp[v]) {
 			tp[u].push_back(x);
 		}
@@ -19,10 +19,10 @@ void dfs_sort(const graph& g, vertex_t u, std::vector<std::vector<vertex_t>>& tp
 	} 
 }
 
-std::vector<std::vector<vertex_t>> dfs_sort(const graph& g) {
+std::vector<std::vector<vertex_t>> dfs_preds(const graph& g) {
 	std::vector<std::vector<vertex_t>> tp(g.size());
 	for (auto u : g.vertices()) {
-		dfs_sort(g, u, tp);
+		dfs_preds(g, u, tp);
 	}
 	return tp;
 }
@@ -48,12 +48,11 @@ int main(int argc, char **argv) {
 
 	auto files = dir_contents(argv[1], ".gv");
 	for (const auto& f : files) {
-		std::map<vertex_t, std::string> labels;
 		attributes attr;
-		float size;
-		graph g = parse(argv[1] + std::string{"/"} + f, labels, attr, size);
+		drawing_options opts;
+		graph g = parse(argv[1] + std::string{"/"} + f, attr, opts);
 
-		auto tp = dfs_sort(g);
+		auto tp = dfs_preds(g);
 
 		/*int u = 0;
 		for (auto preds : tp) {
@@ -65,9 +64,7 @@ int main(int argc, char **argv) {
 			++u;
 		}*/
 
-		//std::random_device rd;
 		std::uniform_int_distribution<vertex_t> dist(0, g.size() - 1);
-
 		std::set<vertex_t> used;
 
 		int n = 0.3 * g.size();
@@ -82,11 +79,11 @@ int main(int argc, char **argv) {
 			vertex_t v = tp[u][ pred(mt) ];
 
 			g.add_edge(u, v);
-			std::cout << labels[u] << " " << labels[v] << "\n";
+			//std::cout << opts.labels[u] << " " << opts.labels[v] << "\n";
 
 			--n;
 		}
 
-		write_dot(g, labels, argv[1] + std::string{"/"} + f);
+		write_dot(g, opts.labels, argv[1] + std::string{"/"} + f);
 	}
 }

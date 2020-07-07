@@ -68,21 +68,22 @@ public:
         std::vector< detail::subgraph > subgraphs = detail::split(g);
         init_nodes();
 
-        vec2 start = { defaults::margin, defaults::margin };
+        vec2 start = { 0*defaults::margin, 0*defaults::margin };
         for (auto& g : subgraphs) {
             vec2 dim = process_subgraph(g, start);
             start.x += dim.x + attrs.node_dist;
-            size.x += dim.x;
+            size.x += dim.x + attrs.node_dist;
             size.y = std::max(size.y, dim.y);
         }
 
         // get rid of the dummy nodes
+        size.x -= attrs.node_dist;
         nodes.resize(original_vertex_count);
-        size += vec2{ defaults::margin, defaults::margin };
+        //size += vec2{ defaults::margin, defaults::margin };
         //init_nodes();
     }
 
-    const attributes& get_attributes() const { return attrs; }
+    const attributes& attribs() const { return attrs; }
 
     /**
      * Returns the positions and sizes of all the vertices in the graph.

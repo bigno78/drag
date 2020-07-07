@@ -90,7 +90,7 @@ public:
     std::array< detail::vertex_map<vertex_t>, 4 > root;
     std::array< detail::vertex_map<vertex_t>, 4 > align;
     std::array< detail::vertex_map<vertex_t>, 4 > sink;
-    std::array< detail::vertex_map< std::optional<float> >, 4 > shift;
+    std::array< detail::vertex_map<float>, 4 > shift;
     std::array< detail::vertex_map< std::optional<float> >, 4 > x;
     std::array< float, 4 > max;
     std::array< float, 4 > min;
@@ -120,7 +120,7 @@ public:
             root[i].resize(h.g);
             align[i].resize(h.g);
             sink[i].resize(h.g);
-            shift[i].resize(h.g);
+            shift[i].resize(h.g, 0);
             x[i].resize(h.g);
         }
 
@@ -273,10 +273,7 @@ public:
         for (auto i : idx_range(h.size(), up(dir))) {
             auto layer = h.layers[i];
             for (auto u : layer) {
-                x[u] = x[ root[u] ];
-                if ( shift[ sink[ root[u] ] ] ) {
-                    x[u] = *x[u] + *shift[ sink[ root[u] ] ];
-                }
+                x[u] = *x[ root[u] ] + shift[ sink[ root[u] ] ];   
 
                 if (*x[u] > max[dir]) {
                     max[dir] = *x[u];
@@ -305,7 +302,7 @@ public:
         for(auto u : h.g.vertices()) {
             nodes[u].pos.x = start + nodes[u].pos.x - min;
         }
-        return max - min + start;
+        return max - min;
     }
 
     void normalize(const detail::hierarchy& h, detail::vertex_map< std::optional<float> >& pos, float start) {
@@ -476,13 +473,9 @@ public:
                     sink[u] = sink[rv];
 
                 if (sink[u] != sink[rv]) {
-                    float new_shift = *x[u] - *x[rv] + d*(left(type) ? node_dist(v, w) : node_dist(w, v));
-                    if (!shift[ sink[rv] ]) {
-                        shift[ sink[rv] ] = new_shift;
-                    } else {
-                        shift[ sink[rv] ] = left(type) ? std::min(*shift[ sink[rv] ], new_shift)
-                                                       : std::max(*shift[ sink[rv] ], new_shift);
-                    }
+                    float new_shift = shift[ sink[rv] ] + *x[rv] - *x[u] - d*(left(type) ? node_dist(v, w) : node_dist(w, v));
+                    shift[ sink[u] ] = left(type) ? std::max(shift[ sink[u] ], new_shift)
+                                                    : std::min(shift[ sink[u] ], new_shift);
                 } else {
                     float new_x = *x[rv] - d*(left(type) ? node_dist(v, w) : node_dist(w, v));
                     x[u] = !left(type) ? std::min(*x[u], new_x)
@@ -640,57 +633,6 @@ public:
             }
         }
     }
-
-     void left_place_block(const detail::hierarchy& h, vertex_t u, orient type) {
-        if (x[type][u]) {
-            return;
-        }
-
-        x[type][u] = 0;
-        vertex_t w = u;
-        do {
-            if (pos[w] > 0) {
-                vertex_t v = h.layer(w)[pos[w] - 1];
-                vertex_t rv = root[ type ][ v ];
-                left_place_block(h, rv, type);
-                if (sink[type][u] == u)
-                    sink[type][u] = sink[type][rv];
-                if (sink[type][u] != sink[type][rv]) {
-                    shift[type][ sink[type][rv] ] = std::min(*shift[type][ sink[type][rv] ], 
-                                                             *x[type][u] - *x[type][rv] - node_dist(w, v));
-                } else {
-                    x[type][u] = std::max(*x[type][u], *x[type][rv] + node_dist(w, v));
-                }
-            }
-            w = align[type][w];
-        } while (w != u);
-    }
-
-    void right_place_block(const detail::hierarchy& h, vertex_t u, orient type) {
-        if (x[type][u]) {
-            return;
-        }
-
-        x[type][u] = 0;
-        vertex_t w = u;
-        do {
-            if (pos[w] < h.layer(w).size() - 1) {
-                vertex_t v = h.layer(w)[pos[w] + 1];
-                vertex_t rv = root[ type ][ v ];
-                right_place_block(h, rv, type);
-                if (sink[type][u] == u)
-                    sink[type][u] = sink[type][rv];
-                if (sink[type][u] != sink[type][rv]) {
-                    shift[type][ sink[type][rv] ] = std::max(*shift[type][ sink[type][rv] ], 
-                                                             *x[type][u] - *x[type][rv] - node_dist(w, v));
-                } else {
-                    x[type][u] = std::min(*x[type][u], *x[type][rv] - node_dist(w, v));
-                }
-            }
-            w = align[type][w];
-        } while (w != u);
-    }
 };
-
 
 } // namespace detail

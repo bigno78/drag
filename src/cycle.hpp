@@ -83,10 +83,10 @@ private:
                 reversed_edges.loops.push_back(u);
             } else if (marks[v] == state::in_progress) { // there is a cycle
                 if (g.has_edge(v, u)) { // two-cycle
-                    std::cout << edge{u,v} << "\n";
+                    //std::cout << edge{u,v} << "\n";
                     reversed_edges.collapsed.insert({ v, u });
                 } else { // regular cycle
-                    std::cout << edge{u,v} << " reg\n";
+                    //std::cout << edge{u,v} << " reg\n";
                     reversed_edges.reversed.insert({ v, u });
                 }
             } else if (marks[v] == state::unvisited) {
