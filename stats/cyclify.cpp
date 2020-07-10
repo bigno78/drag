@@ -1,6 +1,6 @@
 #include "graph.hpp"
 #include "parser.hpp"
-#include "benchmarks/helper.hpp"
+#include "helper.hpp"
 
 #include <random>
 #include <set>

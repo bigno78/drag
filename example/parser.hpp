@@ -14,6 +14,10 @@ float to_pt(float x) {
 	return x*72;
 }
 
+float pt_to_int(float x) {
+    return x/72;
+}
+
 bool contains(const std::map<std::string, vertex_t>& nodes, const std::string& n) {
     return nodes.count(n) > 0;
 }

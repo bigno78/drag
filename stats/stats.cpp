@@ -1,7 +1,7 @@
 #include "interface.hpp"
 #include "svg.hpp"
 #include "parser.hpp"
-#include "benchmarks/helper.hpp"
+#include "helper.hpp"
 
 #include <tuple>
 #include <fstream>
@@ -249,7 +249,11 @@ void write_stats(const std::array< stats, 4 >& s, const std::string& path, const
 	std::ofstream out { path, std::ios_base::app };
 	out << caption << "\n";
 	for (int i = 0; i < 4; ++i) {
-		out << print(i) << ": " << s[i] << "\n";
+		out << print(i) << ": " << s[i].min << " " 
+								<< s[i].lower << " " 
+								<< s[i].median << " "
+								<< s[i].upper << " "
+								<< s[i].max << "\n";
 	}
 }
 

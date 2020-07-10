@@ -43,7 +43,7 @@ namespace defaults {
     const float loop_size = node_size;
 
     inline int iters = 1;
-    inline int forgv = 5;
+    inline int forgv = 6;
     inline bool trans = true;
 }
 

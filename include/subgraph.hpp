@@ -71,8 +71,6 @@ public:
     void remove_edge(edge e) { m_source.remove_edge(e.from, e.to); }
     void remove_edge(vertex_t u, vertex_t v) { remove_edge( { u, v } ); }
 
-    float node_size() const { return m_source.node_size(); }
-
     bool has_edge(edge e) const { 
         auto out = out_neighbours(e.from);
         return std::find(out.begin(), out.end(), e.to) != out.end();

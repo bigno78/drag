@@ -39,11 +39,11 @@ struct positioning {
  */
 struct test_positioning : public positioning {
     std::vector<node>& nodes;
-    positioning_attributes attr;
+    attributes attr;
 
-    test_positioning(positioning_attributes attr, std::vector<node>& nodes)
+    test_positioning(attributes attr, std::vector<node>& nodes)
         : nodes(nodes)
-        , attr(std::move(attr)) {}  
+        , attr(attr) {}  
 
     vec2 run(detail::hierarchy& h, vec2 origin) override {
         float y = origin.y + attr.layer_dist;
@@ -51,10 +51,10 @@ struct test_positioning : public positioning {
         for (auto layer : h.layers) {
             float x = origin.x;
             for (auto u : layer) {
-                x += attr.node_dist + h.g.node_size();
+                x += attr.node_dist + attr.node_size;
                 nodes[u].pos = { x, y };
-                nodes[u].size = h.g.node_size();
-                x += h.g.node_size();
+                nodes[u].size = attr.node_size;
+                x += attr.node_size;
             }
             if ((x - origin.x) > width) {
                 width = x;
@@ -129,7 +129,7 @@ public:
                 root[j][u] = u;
                 align[j][u] = u;
                 sink[j][u] = u;
-                nodes[u].size = h.g.node_size();
+                nodes[u].size = attr.node_size;
             }
         }
 

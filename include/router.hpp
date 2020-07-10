@@ -43,8 +43,8 @@ public:
         angles.init( h.g, { 90, 90, 90, 90 } );
         bound.init( h.g, { 0 } );
         shifts.init( h.g, { 0 } );
-        min_shift = h.g.node_size()/2;
-        loop_height = h.g.node_size()/2;
+        min_shift = attr.node_size/2;
+        loop_height = attr.node_size/2;
         loop.init(h.g, false);
 
         for (auto u : rev.loops) {

@@ -1,12 +1,11 @@
+//#define REPORTING
+
 #include "helper.hpp"
-
-#define REPORTING
-
-#include "../interface.hpp"
-#include "../svg.hpp"
-#include "../parser.hpp"
-#include "../report.hpp"
-#include "../test/test-utils.hpp"
+#include "interface.hpp"
+#include "svg.hpp"
+#include "parser.hpp"
+#include "report.hpp"
+#include "test/test-utils.hpp"
 
 #include <iostream>
 #include <string>
@@ -52,7 +51,6 @@ int main(int argc, char **argv) {
 		for (const auto& f : files) {
             std::cout << f << "\n";
 			draw_graph(path + f, out + f + ".svg");
-            //std::cout << report::simplex::iters << "\n";
 		}
     } else {
 		draw_graph(path, out);
