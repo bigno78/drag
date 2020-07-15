@@ -73,9 +73,13 @@ graph parse(const std::string& file, attributes& attr, drawing_options& opts) {
             } else if (first == "nodesep") {
                 attr.node_dist = to_pt(read_float(line_stream));
             } else if (first == "nodesize") {
-                attr.node_size = to_pt(read_float(line_stream))/2;
+                attr.node_size = to_pt(read_float(line_stream));
             } else if (first == "fontsize") {
                 opts.font_size = read_float(line_stream);
+            } else if (first == "loopangle") {
+                attr.loop_angle = read_float(line_stream);
+            } else if (first == "loopsize") {
+                attr.loop_size = to_pt(read_float(line_stream));
             }
         } else if (a == '-' && line_stream.get() == '>') {
             line_stream >> std::ws;

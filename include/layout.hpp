@@ -25,7 +25,6 @@ class sugiyama_layout {
     unsigned original_vertex_count;
 
     detail::vertex_map<detail::bounding_box> boxes;
-    float loop_size = defaults::loop_size;
 
     // the final positions of vertices and control points of edges
     std::vector< node > nodes;
@@ -64,25 +63,6 @@ public:
         build();
     }
 
-    void build() {
-        std::vector< detail::subgraph > subgraphs = detail::split(g);
-        init_nodes();
-
-        vec2 start = { 0*defaults::margin, 0*defaults::margin };
-        for (auto& g : subgraphs) {
-            vec2 dim = process_subgraph(g, start);
-            start.x += dim.x + attrs.node_dist;
-            size.x += dim.x + attrs.node_dist;
-            size.y = std::max(size.y, dim.y);
-        }
-
-        // get rid of the dummy nodes
-        size.x -= attrs.node_dist;
-        nodes.resize(original_vertex_count);
-        //size += vec2{ defaults::margin, defaults::margin };
-        //init_nodes();
-    }
-
     const attributes& attribs() const { return attrs; }
 
     /**
@@ -102,23 +82,30 @@ public:
     vec2 dimensions() const { return size; } 
 
 private:
+    void build() {
+        std::vector< detail::subgraph > subgraphs = detail::split(g);
+        init_nodes();
+
+        vec2 start { 0, 0 };
+        for (auto& g : subgraphs) {
+            vec2 dim = process_subgraph(g, start);
+            start.x += dim.x + attrs.node_dist;
+            size.x += dim.x + attrs.node_dist;
+            size.y = std::max(size.y, dim.y);
+        }
+
+        size.x -= attrs.node_dist;
+        nodes.resize(original_vertex_count);
+    }
 
     vec2 process_subgraph(detail::subgraph& g, vec2 start) {
-        //std::cout << g << "\n";
+
         auto reversed_edges = cycle_module->run(g);
-
-        /*for (auto e : reversed_edges.reversed) {
-            std::cout << e << "\n";
-        }
-        for (auto e : reversed_edges.collapsed) {
-            std::cout << e << "\n";
-        }*/
-
         detail::hierarchy h = layering_module->run(g);
-        //std::cout << h << "\n";
 
         auto long_edges = add_dummy_nodes(h);
         update_reversed_edges(reversed_edges, long_edges);
+        update_dummy_nodes();
         
 #ifdef CONTROL_CROSSING
         if (crossing_enabled) {
@@ -127,13 +114,8 @@ private:
 #else
         crossing_module->run(h);
 #endif
+        enlarge_loop_boxes(reversed_edges);
 
-        // resize the nodes to make space for new dummy nodes
-        nodes.resize(this->g.size());
-        boxes.resize(g);
-        for (auto u : reversed_edges.loops) {
-            boxes[u].size.x += loop_size;
-        }
         vec2 dimensions = positioning_module->run(h, start);
 
         routing_module->run(h, reversed_edges);
@@ -141,13 +123,28 @@ private:
         return dimensions;
     }
 
+    void update_dummy_nodes() {
+        boxes.resize(g, { {0, 0}, { 0, 0} });
+        
+        auto i = nodes.size();
+        nodes.resize(g.size());
+        for (; i < nodes.size(); ++i) {
+            nodes[i].u = i;
+            nodes[i].size = 0;
+        }
+    }
+
+    void enlarge_loop_boxes(const detail::rev_edges& r) {
+        for (auto u : r.loops) {
+            boxes[u].size.x += attrs.loop_size;
+        }
+    }
 
     void init_nodes() {
         nodes.resize( g.size() );
         boxes.resize( g );
         for ( auto u : g.vertices() ) {
             nodes[u].u = u;
-            nodes[u].default_label = std::to_string(u);
             nodes[u].size = attrs.node_size;
             boxes[u] = { { 2*nodes[u].size, 2*nodes[u].size },
                          { nodes[u].size, nodes[u].size } };

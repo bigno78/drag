@@ -77,31 +77,25 @@ struct bounding_box {
 
 
 class fast_and_simple_positioning : public positioning {
-public:
     std::vector<node>& nodes;
     attributes attr;
     const detail::vertex_map<bounding_box>& boxes;
 
-    detail::vertex_map< std::pair<vertex_t, vertex_t> > upper_medians;
-    detail::vertex_map< std::pair<vertex_t, vertex_t> > lower_medians;
-
     enum orient { upper_left, lower_left, upper_right, lower_right };
+
     std::array< detail::vertex_map<vertex_t>, 4 > medians;
     std::array< detail::vertex_map<vertex_t>, 4 > root;
     std::array< detail::vertex_map<vertex_t>, 4 > align;
     std::array< detail::vertex_map<vertex_t>, 4 > sink;
     std::array< detail::vertex_map<float>, 4 > shift;
     std::array< detail::vertex_map< std::optional<float> >, 4 > x;
+
     std::array< float, 4 > max;
     std::array< float, 4 > min;
 
-    detail::vertex_map<int> pos;
-
-    std::vector<float> layer_size;
-
     edge_set conflicting;
 
-
+public:
     fast_and_simple_positioning(attributes attr, 
                                 std::vector<node>& nodes,
                                 const detail::vertex_map<bounding_box>& boxes, 
@@ -109,9 +103,6 @@ public:
         : nodes(nodes)
         , attr(attr)
         , boxes(boxes)
-        , upper_medians(g)
-        , lower_medians(g)
-        , pos(g) 
     { }
 
     void init(const detail::hierarchy& h) {
@@ -120,8 +111,11 @@ public:
             root[i].resize(h.g);
             align[i].resize(h.g);
             sink[i].resize(h.g);
-            shift[i].resize(h.g, 0);
+            shift[i].resize(h.g);
             x[i].resize(h.g);
+
+            min[i] = std::numeric_limits<float>::max();
+            max[i] = std::numeric_limits<float>::lowest();
         }
 
         for (auto u : h.g.vertices()) {
@@ -129,27 +123,8 @@ public:
                 root[j][u] = u;
                 align[j][u] = u;
                 sink[j][u] = u;
-                nodes[u].size = attr.node_size;
+                shift[j][u] = 0;
             }
-        }
-
-        // init positions on the layers
-        pos.resize(h.g);
-        layer_size.clear();
-        layer_size.resize(h.layers.size(), std::numeric_limits<float>::lowest());
-        for (int l = 0; l < h.layers.size(); ++l) {
-            int i = 0;
-            for (auto u : h.layers[l]) {
-                pos[u] = i++;
-                if (boxes[u].size.y > layer_size[l]) {
-                    layer_size[l] = boxes[u].size.y;
-                }
-            }
-        }
-
-        for (int i = 0; i < 4; ++i) {
-            min[i] = std::numeric_limits<float>::max();
-            max[i] = std::numeric_limits<float>::lowest();
         }
     }
 
@@ -219,41 +194,31 @@ public:
             std::cout << "min: " << min[i] << " max: " << max[i] << " shift: " << shift[i] << "\n";
         }*/
 
-        h.layer_pos.resize(h.size());
         float y = origin.y;
         std::vector<float> vals;
         for (int l = 0; l < h.size(); ++l) {
-            y += layer_size[l]/2;
-            h.layer_pos[l] = y;
+            y += attr.node_size;
             for (auto u : h.layers[l]) {
 #ifdef DEBUG_COORDINATE
                 if(produce_layout < 4) {
                     nodes[u].pos = vec2{ *x[produce_layout][u] + shift[produce_layout], y };
                 } else {
 #endif
-
                 vals = { *x[0][u] + shift[0],
                          *x[1][u] + shift[1],
                          *x[2][u] + shift[2],
                          *x[3][u] + shift[3] };
                 std::sort(vals.begin(), vals.end());
                 nodes[u].pos = { (vals[1] + vals[2])/2, y };
-
 #ifdef DEBUG_COORDINATE
                 }
 #endif
-                nodes[u].size = attr.node_size;
             }
-            y += layer_size[l]/2 + attr.layer_dist;
+            y += attr.node_size + attr.layer_dist;
         }
+        float height = y - attr.layer_dist;
 
-        float width;
-#ifdef DEBUG_COORDINATE
-        if (produce_layout < 4) {
-            //return { max[produce_layout] - min[produce_layout], y - attr.layer_dist };
-        }
-#endif
-        width = normalize(h, origin.x);
+        float width = normalize(h, origin.x);
 
         return { width, y - attr.layer_dist };
     }
@@ -305,32 +270,19 @@ public:
         return max - min;
     }
 
-    void normalize(const detail::hierarchy& h, detail::vertex_map< std::optional<float> >& pos, float start) {
-        float min = 0;
-        for(auto u : h.g.vertices()) {
-            if (*pos[u] < min) {
-                min = *pos[u];
-            }
-        }
-
-        for(auto u : h.g.vertices()) {
-            pos[u] = start + *pos[u] - min;
-        }
-    }
-
     void init_medians(const detail::hierarchy& h) {
         std::vector<vertex_t> neighbours;
         for (auto u : h.g.vertices()) {
             {
                 neighbours.insert(neighbours.begin(), h.g.out_neighbours(u).begin(), h.g.out_neighbours(u).end());
-                auto [ left, right ] = median(u, neighbours);
+                auto [ left, right ] = median(h, u, neighbours);
                 medians[orient::lower_left][u] = left;
                 medians[orient::lower_right][u] = right;
                 neighbours.clear();
             }
 
             neighbours.insert(neighbours.begin(), h.g.in_neighbours(u).begin(), h.g.in_neighbours(u).end());
-            auto [ left, right ] = median(u, neighbours);
+            auto [ left, right ] = median(h, u, neighbours);
             medians[orient::upper_left][u] = left;
             medians[orient::upper_right][u] = right;
             neighbours.clear();
@@ -338,7 +290,7 @@ public:
     }
 
     template< typename Neighbours >
-    std::pair<vertex_t, vertex_t> median(vertex_t u, Neighbours neigh) {
+    std::pair<vertex_t, vertex_t> median(const hierarchy& h, vertex_t u, Neighbours neigh) {
         int count = neigh.size();
         int m = count / 2;
         if (count == 0) {
@@ -348,9 +300,10 @@ public:
                 neigh.begin(), 
                 neigh.begin() + m, 
                 neigh.end(),
-                [this] (const auto u, const auto v) {
-                    return pos[u] < pos[v];
-                });
+                [&h] (auto u, auto v) {
+                    return h.pos[u] < h.pos[v];
+                }
+        );
         vertex_t right = *(neigh.begin() + m);
         if (count % 2 == 1) {
             return { right, right };
@@ -359,9 +312,10 @@ public:
                 neigh.begin(), 
                 neigh.begin() + m - 1, 
                 neigh.end(),
-                [this] (const auto u, const auto v) {
-                    return pos[u] < pos[v];
-                });
+                [&h] (auto u, auto v) {
+                    return h.pos[u] < h.pos[v];
+                }
+        );
         return { *(neigh.begin() + m - 1), right };
     }
 
@@ -378,8 +332,8 @@ public:
      * Vertex 'u' must be a tail of inner segment.
      * Returns the position of the head of this inner segment on its layer.
      */
-    int inner_pos(const detail::hierarchy& h, vertex_t u) {
-        return pos[ *h.g.out_neighbours(u).begin() ];
+    int inner_pos(const hierarchy& h, vertex_t u) {
+        return h.pos[ *h.g.out_neighbours(u).begin() ];
     }
 
     /**
@@ -387,7 +341,7 @@ public:
      * Type 1 conflict occur when non-inner edge crosses inner segment.
      * Inner segment is an edge between two dummy vertices.
      */
-    void mark_conflicts(const detail::hierarchy& h) {
+    void mark_conflicts(const hierarchy& h) {
         if (h.size() < 4) {
             return;
         }
@@ -409,7 +363,7 @@ public:
                     while(p <= j) {
                         vertex_t pth = h.layers[i][p];
                         for (auto v : h.g.out_neighbours(pth)) {
-                            if (pos[v] < last_pos || pos[v] > curr_pos) {
+                            if (h.pos[v] < last_pos || h.pos[v] > curr_pos) {
                                 conflicting.insert(pth, v);
                             }
                         }
@@ -436,12 +390,12 @@ public:
                 vertex_t u = layer[k];
                 
                 for ( auto m : { medians[dir][u], medians[invert_horizontal(dir)][u] } ) {
-                    if (m != u && align[u] == u && !is_conflicting(u, m, dir) && d*pos[m] >= d*m_pos) {
+                    if (m != u && align[u] == u && !is_conflicting(u, m, dir) && d*h.pos[m] >= d*m_pos) {
                         align[m] = u;
                         root[u] = root[m];
                         align[u] = root[m];
 
-                        m_pos = pos[m] + d;
+                        m_pos = h.pos[m] + d;
                     }
                 }
             }
@@ -463,8 +417,8 @@ public:
         int d = left(type) ? -1 : 1;
         vertex_t w = u;
         do {
-            if ( !is_last_idx(pos[w], h.layer(w).size(), !left(type)) ) {
-                vertex_t v = h.layer(w)[ pos[w] + d ];
+            if ( !is_last_idx(h.pos[w], h.layer(w).size(), !left(type)) ) {
+                vertex_t v = h.layer(w)[ h.pos[w] + d ];
                 vertex_t rv = root[v];
 
                 place_block(h, rv, type);
@@ -497,10 +451,6 @@ public:
     }
 
     float node_dist(vertex_t u, vertex_t v) {
-        /*std::cout << u << boxes[u].size << boxes[u].center << " -> " << v << boxes[v].size << boxes[v].center;
-        std::cout << ": " << boxes[u].size.x - boxes[u].center.x +
-               boxes[v].center.x + 
-               attr.node_dist << "\n";*/
         return boxes[u].size.x - boxes[u].center.x +
                boxes[v].center.x + 
                attr.node_dist;
@@ -514,7 +464,7 @@ public:
         return { 0, static_cast<int>(size), 1 };
     }
 
-    // Is i one of the endpoints of the interval <0, size - 1>?
+    // Is i one of the endpoints of the interval <0, size - 1>
     bool is_last_idx(int i, std::size_t size, bool desc) const {
         return (desc && i == size - 1) || (!desc && i == 0);
     }
@@ -532,107 +482,7 @@ public:
         }
         assert(false);
     }
-    
-    
 
-    
-    // FOR DEBUG PURPOUSES
-    
-    void lower_left_align(const detail::hierarchy& h) {
-        detail::vertex_map<vertex_t>& align = this->align[orient::lower_left];
-        detail::vertex_map<vertex_t>& root = this->root[orient::lower_left];
-
-        for (int l = h.size() - 1; l >= 0; --l) {
-            auto layer = h.layers[l];
-            int m_pos = -1;
-
-            for (int k = 0; k < layer.size(); ++k) {
-                vertex_t u = layer[k];
-                
-                for ( auto m : { medians[orient::lower_left][u], medians[orient::lower_right][u] } ) {
-                    if (m != u && align[u] == u && !conflicting.contains(u, m) && pos[m] > m_pos) {
-                        align[m] = u;
-                        root[u] = root[m];
-                        align[u] = root[u];
-
-                        m_pos = pos[m];
-                    }
-                }
-            }
-        }
-    }
-
-    void lower_right_align(const detail::hierarchy& h) {
-        detail::vertex_map<vertex_t>& align = this->align[orient::lower_right];
-        detail::vertex_map<vertex_t>& root = this->root[orient::lower_right];
-
-        for (int l = h.size() - 1; l >= 0; --l) {
-            auto layer = h.layers[l];
-            int m_pos = h.g.size();
-
-            for (int k = layer.size() - 1; k >= 0; --k) {
-                vertex_t u = layer[k];
-                
-                for ( auto m : { medians[orient::lower_right][u], medians[orient::lower_left][u] } ) {
-                    if (m != u && align[u] == u && !conflicting.contains(u, m) && pos[m] < m_pos) {
-                        align[m] = u;
-                        root[u] = root[m];
-                        align[u] = root[u];
-
-                        m_pos = pos[m];
-                    }
-                }
-            }
-        }
-    }
-
-    void upper_right_align(const detail::hierarchy& h) {
-        detail::vertex_map<vertex_t>& align = this->align[orient::upper_right];
-        detail::vertex_map<vertex_t>& root = this->root[orient::upper_right];
-
-        for (int l = 0; l < h.size(); ++l) {
-            auto layer = h.layers[l];
-            int m_pos = h.g.size();
-
-            for (int k = layer.size() - 1; k >= 0; --k) {
-                vertex_t u = layer[k];
-                
-                for ( auto m : { medians[orient::upper_right][u], medians[orient::upper_left][u] } ) {
-                    if (m != u && align[u] == u && !conflicting.contains(u, m) && pos[m] < m_pos) {
-                        align[m] = u;
-                        root[u] = root[m];
-                        align[u] = root[u];
-
-                        m_pos = pos[m];
-                    }
-                }
-            }
-        }
-    }
-
-    void upper_left_align(const detail::hierarchy& h) {
-        detail::vertex_map<vertex_t>& align = this->align[orient::upper_left];
-        detail::vertex_map<vertex_t>& root = this->root[orient::upper_left];
-
-        for (int l = 0; l < h.size(); ++l) {
-            auto layer = h.layers[l];
-            int m_pos = -1;
-
-            for (int k = 0; k < layer.size(); ++k) {
-                vertex_t u = layer[k];
-                
-                for ( auto m : { medians[orient::upper_left][u], medians[orient::upper_right][u] } ) {
-                    if (m != u && align[u] == u && !conflicting.contains(u, m) && pos[m] > m_pos) {
-                        align[m] = u;
-                        root[u] = root[m];
-                        align[u] = root[u];
-
-                        m_pos = pos[m];
-                    }
-                }
-            }
-        }
-    }
 };
 
 } // namespace detail

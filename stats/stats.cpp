@@ -16,16 +16,6 @@ void prolong(std::vector<vec2>& points, node from, node to) {
 	}
 }
 
-template<typename A>
-bool same_sgn(A a, A b) {
-	return sgn(a) == sgn(b);
-}
-
-template<typename A, typename ... Args>
-bool same_sgn(A a, A b, Args ... args) {
-	return sgn(a) == sgn(b) && same_sgn(b, args...);
-}
-
 bool segments_intersect(vec2 p1, vec2 p2, vec2 q1, vec2 q2) {
 	auto r = p2 - p1;
 	auto s = q2 - q1;
@@ -82,7 +72,7 @@ auto parse_plain_dot(const std::string& file)
 			std::string name;
 			float x, y, size;
 			line_stream >> name >> x >> y >> size;
-			nodes.push_back( { u, vec2{ to_pt(x), dims.y - to_pt(y) }, to_pt(size)/2, std::to_string(u) } );
+			nodes.push_back( {u, vec2{ to_pt(x), dims.y - to_pt(y) }, to_pt(size)/2} );
 			label_to_vertex[name] = u++;
 		} else if (key_word == "edge") {
 			std::string from, to;

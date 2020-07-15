@@ -16,12 +16,13 @@ namespace detail {
 // ----------------------------------------------------------------------------------------------
 
 /**
- * Counts the number of crossings between edges indident on two *adjacent* vertices.
+ * Counts the number of crossings between edges indident on <u> and <v> 
+ * if <u> would be to the left of <v>.
  * Takes into account both the ingoing and outgoing edges.
  * 
- * 'u' must be to the left of 'v'
+ * <u> and <v> need to be on the same layer
  */
-int count_vertex_crossings(const hierarchy& h, vertex_t u, vertex_t v) {
+int crossing_number(const hierarchy& h, vertex_t u, vertex_t v) {
     int count = 0;
     for (auto out_u : h.g.out_neighbours(u)) {
         for (auto out_v : h.g.out_neighbours(v)) {
@@ -95,26 +96,24 @@ struct crossing_reduction {
 
 /**
  * Barycentric heurictic for crossing reduction.
- * Vertices on each layer are order based on their barycenters - the average position of its neighbours
+ * Vertices on each layer are order based on their barycenters - the average position of their neighbours.
  */
 class barycentric_heuristic : public crossing_reduction {
-    unsigned max_iters = defaults::iters;
-    unsigned forgiveness = defaults::forgv;
-    bool trans = defaults::trans;
+    unsigned random_iters = 1;
+    unsigned forgiveness = 7;
+    bool trans = true;
 
-    std::random_device dev;
     std::mt19937 mt;
 
     vertex_map<int> best_order;
     int min_cross;
 
-    int cross_calls = 0;
-
 public:
-    void run(hierarchy& h) override {
-        best_order = h.pos;
-        min_cross = count_crossings(h);
+    barycentric_heuristic() = default;
+    barycentric_heuristic(int rnd_iters, int max_fails, bool do_transpose)
+        : random_iters(rnd_iters), forgiveness(max_fails), trans(do_transpose) {}
 
+    void run(hierarchy& h) override {
 #ifdef REPORTING
         report::base = min_cross;
         report::random_runs = max_iters;
@@ -124,16 +123,18 @@ public:
         report::iters = 0;
 #endif
 
+        min_cross = init_order(h);
+        best_order = h.pos;
         int base = min_cross;
-        for (int i = 0; i < max_iters; ++i) {
-            barycenter(h, 0);
+        for (int i = 0; i < random_iters; ++i) {
             reduce(h, base);
-            if (i != max_iters - 1) {
+            
+            if (i != random_iters - 1) {
                 for (auto& l : h.layers) {
                     std::shuffle(l.begin(), l.end(), mt);
                 }
                 h.update_pos();
-                base = count_crossings(h);
+                base = init_order(h);
             }
         }
 
@@ -145,33 +146,22 @@ public:
 #ifdef REPORTING
         report::final = min_cross;
 #endif
-
-        //std::cout << cross_calls << "\n";
     }
 
-    void set_trans(bool a) { trans = a; }
+    int init_order(hierarchy& h) {
+        barycenter(h, 0);
+        return count_crossings(h);
+    }
 
 private:
     // attempts to reduce the number of crossings
-    void reduce(hierarchy& h, int base_cross) {
-        vertex_map<float> weights(h.g);
-
-        int local_min = base_cross;
+    void reduce(hierarchy& h, int local_min) {
         auto local_order = h.pos;
         int fails = 0;
 
-        int i = 0;
-        for (; true; ++i) {
+        for (int i = 0; ; ++i) {
 
-            if (i % 2 == 0) { // top to bottom
-                for (int j = 1; j < h.size(); ++j) {
-                    reorder_layer(h, weights, j, true);
-                }
-            } else { // from bottom up
-                for (int j = h.size() - 2; j >= 0; --j) {
-                    reorder_layer(h, weights, j, false);
-                }
-            }
+            barycenter(h, i);   
 
             if (trans) {
 #ifdef FAST
@@ -182,6 +172,7 @@ private:
             }
 
             int cross = count_crossings(h);
+            //std::cout << cross << "\n";
             if (cross < local_min) {
                 fails = 0;
                 local_order = h.pos;
@@ -208,6 +199,7 @@ private:
 
     void barycenter(hierarchy& h, int i) {
         vertex_map<float> weights(h.g);
+
         if (i % 2 == 0) { // top to bottom
             for (int j = 1; j < h.size(); ++j) {
                 reorder_layer(h, weights, j, true);
@@ -225,17 +217,31 @@ private:
         for (vertex_t u : layer) {
                 weights[u] = weight( h.pos, u, downward ? h.g.in_neighbours(u) : h.g.out_neighbours(u) );
         }
-        std::sort(layer.begin(), layer.end(), [&weights] (const auto& u, const auto& v) {
+        std::sort(layer.begin(), layer.end(), [&weights,i,&h] (const auto& u, const auto& v) {
+            assert(h.ranking[u] == i);
+            assert(h.ranking[v] == i);
             return weights[u] < weights[v];
         });
+
         h.update_pos();
     }
 
-    /**
-     * Heuristic for reducing crossing 
-     * which repeatedly attempts to swap all ajacent vertices
-     * until no improvement is made.
-     */
+    // calculates the weight of vertex as an average of the positions of its neighbour
+    template<typename T>
+    float weight(const vertex_map<int>& positions, vertex_t u, const T& neighbours) {
+        unsigned count = 0;
+        unsigned sum = 0;
+        for (auto v : neighbours) {
+            sum += positions[v];
+            count++;
+        }
+        if (count == 0) {
+            return positions[u];
+        }
+        return sum / (float)count;
+    }
+
+    // Heuristic for reducing crossings which repeatedly attempts to swap all ajacent vertices.
     void transpose(hierarchy& h) {
         bool improved = true;
         int k = 0;
@@ -243,28 +249,19 @@ private:
             improved = false;
             
             for (auto& layer : h.layers) {
-                assert(layer.size() >= 1);
                 for (int i = 0; i < layer.size() - 1; ++i) {
-                    int old = count_vertex_crossings(h, layer[i], layer[i + 1]);
-                    int next = count_vertex_crossings(h, layer[i + 1], layer[i]);
+                    int old = crossing_number(h, layer[i], layer[i + 1]);
+                    int next = crossing_number(h, layer[i + 1], layer[i]);
                     int diff =  old - next;
-                    cross_calls += 2;
                     
-                    if ( diff > 0 ) {
-                        //std::cout << layer[i] << "x" << layer[i+1] << " ";
-                        //std::cout << "old: " << old << " next: " << next << "\n";
+                    if ( old > next ) {
                         improved = true;
-                        //int before = count_crossings(h);
-                        exchange(h, layer[i], layer[i + 1]);
-                        //assert( (before - diff == count_crossings(h)) );
-                        //min_cross -= diff;
+                        h.swap(layer[i], layer[i + 1]);
                     }
                 }
             }
-            //std::cout << "\n";
             k++;
         }
-        //std::cout << k << " k\n";
     }
 
     void fast_transpose(hierarchy& h) {
@@ -280,17 +277,16 @@ private:
                 assert(layer.size() >= 1);
                 for (int i = 0; i < layer.size() - 1; ++i) {
                     if (eligible.at( layer[i] )) {
-                        int old = count_vertex_crossings(h, layer[i], layer[i + 1]);
-                        int next = count_vertex_crossings(h, layer[i + 1], layer[i]);
+                        int old = crossing_number(h, layer[i], layer[i + 1]);
+                        int next = crossing_number(h, layer[i + 1], layer[i]);
                         int diff =  old - next;
-                        cross_calls += 2;
                     
                         if ( diff > 0 ) {
                             //std::cout << layer[i] << "x" << layer[i+1] << " ";
                             //std::cout << "old: " << old << " next: " << next << "\n";
                             improved = true;
                             //int before = count_crossings(h);
-                            exchange(h, layer[i], layer[i + 1]);
+                            h.swap(layer[i], layer[i + 1]);
                             //assert( (before - diff == count_crossings(h)) );
                             //min_cross -= diff;
                             if (i > 0) eligible.set( layer[i - 1], true );
@@ -310,71 +306,6 @@ private:
             //std::cout << "\n";
         }
         //std::cout << k << " k\n";
-    }
-
-    void faster_transpose(hierarchy& h) {
-        for (auto u : h.g.vertices()) {
-            //std::cout << u << "\n";
-        }
-        vertex_map<bool> eligible(h.g, true);
-
-        bool improved = true;
-        while (improved) {
-            improved = false;
-            for (auto u : h.g.vertices()) {
-                if (eligible.at( h.pos[u] ) && h.has_next(u)) {
-                    int old = count_vertex_crossings(h, u, h.next(u));
-                    int next = count_vertex_crossings(h, h.next(u), u);
-                    int diff =  old - next;
-                
-                    if ( diff > 0 ) {
-                        //std::cout << "old: " << old << " next: " << next << "\n";
-                        improved = true;
-                        int before = count_crossings(h);
-                        exchange(h, u, h.next(u));
-                        assert( (before - diff == count_crossings(h)) );
-                        //min_cross -= diff;
-                        if ( h.has_prev(u) ) eligible.set( h.prev(u), true );
-                        /*std::cout << u << "\n";
-                        if (u == 81) {
-                            std::cout << h.has_next(u) << "\n";
-                            for (auto v : h.layer(u)) {
-                                std::cout << v << " ";
-                            }
-                            std::cout << "\n";
-                        }*/
-                        eligible.set( u, true );
-                        eligible.set( h.prev(u), false );
-                    } else {
-                        eligible.set( u, false );
-                    }
-                }
-            }
-        }
-    }
-
-    // calculates the weight of vertex as an average of the positions of its neighbour
-    template<typename T>
-    float weight(const vertex_map<int>& positions, vertex_t u, const T& neighbours) {
-        unsigned count = 0;
-        unsigned sum = 0;
-        for (auto v : neighbours) {
-            sum += positions[v];
-            count++;
-        }
-        if (count == 0) {
-            return positions[u];
-        }
-        return sum / (float)count;
-    }
-
-    // exchange the positions of two vertices on the same layer
-    void exchange(hierarchy& h, vertex_t u, vertex_t v) {
-        h.layer(v)[ h.pos[v] ] = u;
-        h.layer(u)[ h.pos[u] ] = v;
-        int tmp = h.pos[u];
-        h.pos[u] = h.pos[v];
-        h.pos[v] = tmp;
     }
 
 };

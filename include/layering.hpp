@@ -1,6 +1,3 @@
-#ifndef LAYERING_HPP
-#define LAYERING_HPP
-
 #pragma once
 
 #include <vector>
@@ -27,7 +24,6 @@ struct hierarchy {
     vertex_map<int> ranking;
     vertex_map<int> pos;
     std::vector< std::vector<vertex_t> > layers;
-    std::vector< float > layer_pos;
     subgraph& g;
 
     hierarchy(subgraph& g) : hierarchy(g, -1) {}
@@ -66,14 +62,8 @@ struct hierarchy {
 
     // Swap two vertices. Updates all necessary attributes.
     void swap(vertex_t u, vertex_t v) {
-        auto pos_u = pos[u];
-        auto rank_u = ranking[u];
-
-        pos[u] = pos[v];
-        pos[v] = pos_u;
-
-        ranking[u] = ranking[v];
-        ranking[v] = rank_u;
+        std::swap(pos[u], pos[v]);
+        std::swap(ranking[u], ranking[v]);
 
         layers[ ranking[u] ][ pos[u] ] = u;
         layers[ ranking[v] ][ pos[v] ] = v;
@@ -223,15 +213,15 @@ struct tight_tree {
         }
     }
 
-    [[nodiscard]] std::vector<vertex_t>& children(vertex_t u) { return nodes[u].children; }
-    [[nodiscard]] const std::vector<vertex_t>& children(vertex_t u) const { return nodes[u].children; }
+    std::vector<vertex_t>& children(vertex_t u) { return nodes[u].children; }
+    const std::vector<vertex_t>& children(vertex_t u) const { return nodes[u].children; }
 
-    [[nodiscard]] vertex_t parent(vertex_t u) const { return *nodes[u].parent; }
+    vertex_t parent(vertex_t u) const { return *nodes[u].parent; }
 
-    [[nodiscard]] tree_node& node(vertex_t u) { return nodes[u]; }
-    [[nodiscard]] const tree_node& node(vertex_t u) const { return nodes[u]; }
+    tree_node& node(vertex_t u) { return nodes[u]; }
+    const tree_node& node(vertex_t u) const { return nodes[u]; }
 
-    [[nodiscard]] int cut_val(vertex_t u, vertex_t v) const {
+    int cut_val(vertex_t u, vertex_t v) const {
         assert(u == *nodes[v].parent);
         return nodes[v].cut_value;
     }
@@ -241,7 +231,7 @@ struct tight_tree {
         nodes[v].cut_value = val;
     }
     
-    [[nodiscard]] int out_cut_val(vertex_t u, vertex_t v) const {
+    int out_cut_val(vertex_t u, vertex_t v) const {
         assert(u == *nodes[v].parent);
         return nodes[v].out_cut_value;
     }
@@ -284,7 +274,7 @@ struct tight_tree {
     int dir(vertex_t u, vertex_t v) const { return sgn( h->span(u, v) ); }
 
     // find a common ancestor of two vertices, postorder **must** be calculated first
-    [[nodiscard]] vertex_t common_acestor(vertex_t u, vertex_t v) {
+    vertex_t common_acestor(vertex_t u, vertex_t v) {
         vertex_t ancestor = u;
 
         int left_min;
@@ -298,8 +288,8 @@ struct tight_tree {
         }
 
         // the common acestor is the first node such that min <= left_min && order >= right_order
-        // no need to check if parent exists, root has the smalles min and the largest order
         while (nodes[ancestor].min > left_min || nodes[ancestor].order < right_order) {
+            // no need to check if parent exists, root has the smalles min and the largest order
             ancestor = *nodes[ancestor].parent;
         }
 
@@ -435,6 +425,14 @@ public:
             h.layers[ h.ranking[u] ].push_back(u);
             h.pos[u] = h.layers[ h.ranking[u] ].size() - 1;
         }
+
+        /*int total = 0;
+        for (auto u : h.g.vertices()) {
+            for (auto v : h.g.out_neighbours(u)) {
+                total += h.span(u, v);
+            }
+        }
+        std::cout << total << "\n";*/
 
         //std::cout << "done\n";
 
@@ -603,18 +601,11 @@ private:
     void switch_tree_edges(const subgraph& g, hierarchy& h, tree_edge orig, tree_edge entering) {
         auto ancestor = tree.common_acestor(entering.u, entering.v);
 
-        //std::cout << entering.u << ", " << entering.v << "| " << entering.dir << "\n";
-        //std::cout << "ancestor: " << ancestor << "\n";
-
         tree.swap_edges({entering.u, entering.v},{orig.u, orig.v});
 
-
         tree.postorder_search(ancestor, tree.node(ancestor).min);
-
         fix_cut_values(g, h, ancestor, orig.u);
         fix_cut_values(g, h, ancestor, orig.v);
-
-        //std::cout << tree << "\n";
     }
 
     void fix_cut_values(const subgraph& g, hierarchy& h, vertex_t root, vertex_t u) {
@@ -638,23 +629,40 @@ private:
         tree_edge entering { 0, 0, -leaving.dir };
         int span = std::numeric_limits<int>::max();
 
-        for_each_node(leaving.v, [&] (vertex_t u) {
-            //std::cout << "STARTING " << u << "\n";
-            for (auto v : g.neighbours(u)) {
-                if (tree.component( {leaving.u, leaving.v}, v ) == leaving.u) {
-                    //std::cout << "CONSIDERING " << edge{u, v} << "\n";
-                    //std::cout << sgn(h.span(v, u))  << "!=" << leaving.dir << " " << (sgn(h.span(v, u)) != leaving.dir) << "\n";
-                    //std::cout << std::abs(h.span(v, u)) << "\n";
-                    if (tree.dir(v, u) == entering.dir && std::abs(h.span(v, u)) < span) {
-                        entering.u = v;
-                        entering.v = u;
-                        span = std::abs(h.span(u, v));
-                    }
+        vertex_t start_component = leaving.dir == 1 ? leaving.v : leaving.u;
+        vertex_t end_component = start_component == leaving.u ? leaving.v : leaving.u;
+
+        for (auto u : g.vertices()) {
+            if (tree.component({leaving.u, leaving.v}, u) != start_component)
+                continue;
+
+            for (auto v : g.out_neighbours(u)) {
+                if (tree.component({leaving.u, leaving.v}, v) == end_component && h.span(u, v) < span) {
+                    entering.u = entering.dir == 1 ? u : v;
+                    entering.v = entering.dir == 1 ? v : u;
+                    span = h.span(u, v);
                 }
             }
-        });
+        }
+
+        assert(span < std::numeric_limits<int>::max());
 
         return entering;
+    }
+
+    std::optional<tree_edge> find_leaving_edge(hierarchy& h) {
+        for (auto u : h.g.vertices()) {
+            for (auto v : h.g.out_neighbours(u)) {
+                if (v != tree.root && tree.parent(v) == u && tree.node(v).cut_value < 0) {
+                    return tree_edge{ u, v, 1 };
+                }
+                if (u != tree.root && tree.parent(u) == v && tree.node(u).cut_value < 0) {
+                    return tree_edge{ v, u, -1 };
+                }
+            }
+        }
+
+        return std::nullopt;
     }
 
     // Applies a function to each node of the subtree with given root in a preorder search
@@ -666,35 +674,26 @@ private:
         }
     }
 
+
     void optimize_edge_length(const subgraph& g, hierarchy& h) {
         int iters = 0;
-repeat:
-        for (auto u : g.vertices()) {
-            if (u != tree.root && tree.node(u).cut_value < 0) {
 
-                tree_edge leaving = { tree.parent(u), u, tree.dir(tree.parent(u), u) };
+        while(true) {
+            auto leaving = find_leaving_edge(h);
+            if (!leaving)
+                break;
 
-                //std::cout << "leaving: " << leaving << "\n";
+            tree_edge entering = find_entering_edge(g, h, *leaving);
 
-                tree_edge entering = find_entering_edge(g, h, leaving);
+            switch_tree_edges(g, h, *leaving, entering);
 
-                //std::cout << "entering: " << entering << "\n";
-                /*if (entering.u == 0 && entering.v == 0) {
-                    return;
-                }*/
+            int d = h.span( entering.u, entering.v );
+            d = -d + sgn(d);
+            move_subtree(h, entering.v, d);
 
-                switch_tree_edges(g, h, leaving, entering);
-                int d = h.span( entering.u, entering.v );
-                d = -d + sgn(d);
-                move_subtree(h, entering.v, d);
-
-                //std::cout << "\n" << "REMOVED " << leaving << " ADDED" << entering << "\n";
-                //std::cout << tree << "\n\n";
-
-                iters++;
-                goto repeat;
-            }
+            iters++;
         }
+
 #ifdef REPORTING
         report::simplex::iters = iters;
 #endif
@@ -704,5 +703,3 @@ repeat:
 
 
 } // namespace detail
-
-#endif

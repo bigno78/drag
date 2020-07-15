@@ -1,6 +1,3 @@
-#ifndef TYPES_HPP
-#define TYPES_HPP
-
 #pragma once
 
 #include <string>
@@ -8,43 +5,34 @@
 
 #include "vec2.hpp"
 
+
 using vertex_t = unsigned;
 
+/**
+ * Object representing a vertex in the final layout.
+ */
 struct node {
-    vertex_t u;
-    vec2 pos;
-    float size;
-    std::string default_label;
+    vertex_t u;  /**< the corresponding vertex identifier */
+    vec2 pos;    /**< the position in space */
+    float size;  /**< the radius */
 };
 
-
+/**
+ * Object representing an edge in the final layout.
+ */
 struct path {
-    vertex_t from, to;
-    std::vector< vec2 > points;
-    bool bidirectional = false;
+    vertex_t from, to;          /**< the vertex identifiers of endpoints of the corresponding edge */
+    std::vector< vec2 > points; /**< control points of the poly-line representing the edge */
+    bool bidirectional = false; /**< is the edge bidirectional? */
 };
 
-
+/**
+ * Contains the parameters of the desired graph layout.
+ */
 struct attributes {
-    float node_size = 25;
-    float node_dist = 20;
-    float layer_dist = 40;
-    float loop_angle = 60;
-    float loop_size = node_size;
-    float margin = 15;
+    float node_size = 25;        /**< radius of all nodes */
+    float node_dist = 20;        /**< minimum distance between borders of 2 nodes */
+    float layer_dist = 40;       /**< minimum distance between borders of nodes in 2 different layers */
+    float loop_angle = 55;       /**< angle determining the point on the node where a loop connects to it */
+    float loop_size = node_size; /**< distance which the loop extends from the node*/
 };
-
-
-namespace defaults {
-    const float margin = 15;
-    const float layer_dist = 40;
-    const float node_dist = 20;
-    const float node_size = 25;
-    const float loop_size = node_size;
-
-    inline int iters = 1;
-    inline int forgv = 6;
-    inline bool trans = true;
-}
-
-#endif

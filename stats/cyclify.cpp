@@ -54,15 +54,15 @@ int main(int argc, char **argv) {
 
 		auto tp = dfs_preds(g);
 
-		/*int u = 0;
+		int u = 0;
 		for (auto preds : tp) {
-			std::cout << labels[u] << ": ";
+			std::cout << opts.labels[u] << ": ";
 			for (auto v : preds) {
-				std::cout << labels[v] << " ";
+				std::cout << opts.labels[v] << " ";
 			} 
 			std::cout << "\n";
 			++u;
-		}*/
+		}
 
 		std::uniform_int_distribution<vertex_t> dist(0, g.size() - 1);
 		std::set<vertex_t> used;

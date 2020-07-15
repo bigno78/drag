@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.5.0)
 
 project(bakalarka)
 
-#file(COPY data/ DESTINATION data/)
-
 # helper targets for different compile and link options
 add_library(options INTERFACE)
 target_include_directories(options INTERFACE	 include/)
@@ -26,5 +24,5 @@ target_link_libraries(cycl PRIVATE debug_options)
 target_include_directories(cycl PRIVATE example/)
 
 add_executable(stats stats/stats.cpp)
-target_link_libraries(stats PRIVATE debug_options)
+target_link_libraries(stats PRIVATE bench_options)
 target_include_directories(stats PRIVATE example/)

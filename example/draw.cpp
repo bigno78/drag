@@ -5,7 +5,6 @@
 #include "svg.hpp"
 #include "parser.hpp"
 #include "report.hpp"
-#include "test/test-utils.hpp"
 
 #include <iostream>
 #include <string>
@@ -19,13 +18,26 @@ void draw_graph(const std::string& in, const std::string& out) {
 	draw_to_svg(out, l, opts);
 }
 
-void print_usage() {
-    std::cout << "usage: ./draw [-d] source destination\n";
+
+std::string usage_string =
+R"(Create an SVG image of a graph or a set of graphs.
+    
+usage: ./draw [-d] <source> <destination>
+
+  -d Draw all .gv files in the source directory to the destination directory.
+)";
+
+void print_help() {
+    std::cout << usage_string;
 }
 
 int main(int argc, char **argv) {
+    if (argc > 1 && std::string{ argv[1] } == "-h") {
+        print_help();
+        return 0;
+    }
     if (argc < 3 || argc > 4) {
-        print_usage();
+        print_help();
         return 1;
     }
 
@@ -38,7 +50,7 @@ int main(int argc, char **argv) {
         print_dir = true;
         ++i;
         if (argc != 4) {
-            print_usage();
+            print_help();
             return 1;
         }
     }

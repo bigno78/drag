@@ -9,7 +9,8 @@
 struct drawing_options {
     std::map<vertex_t, std::string> labels;
     float font_size = 12;
-    bool use_labels = false;
+    bool use_labels = true;
+    float margin = 15;
 };
 
 class svg_img {
@@ -17,16 +18,16 @@ class svg_img {
 
 public:
 
-    svg_img(const std::string& filename, vec2 dims) : file(filename) {
-        float w = dims.x + 2*defaults::margin;
-        float h = dims.y + 2*defaults::margin;
+    svg_img(const std::string& filename, vec2 dims, float margin) : file(filename) {
+        float w = dims.x + 2*margin;
+        float h = dims.y + 2*margin;
         file << "<svg xmlns=\"http://www.w3.org/2000/svg\"\n";
         file << "\txmlns:xlink=\"http://www.w3.org/1999/xlink\"\n";
         file << "\txmlns:ev=\"http://www.w3.org/2001/xml-events\"\n";
         file << "\twidth=\"" << w << "pt\" height=\"" << h << "pt\"\n";
         file << "\tviewBox=\"0.00 0.00 " << w << " " << h << "\">\n";
         file << "<rect width=\"" << w << "\" height=\"" << h << "\" fill=\"white\" stroke=\"transparent\" />";
-        file << "<g transform=\"scale(1 1) rotate(0) translate(" << defaults::margin << " " << defaults::margin << ")\">";
+        file << "<g transform=\"scale(1 1) rotate(0) translate(" << margin << " " << margin << ")\">";
     }
 
     ~svg_img() { 
@@ -45,9 +46,6 @@ public:
         file << "\" stroke=\"" << color << "\" ";
         file << "fill=\"none\" ";
         file << "/>\n";
-        for (int i = 1; i < points.size() - 1; ++i) {
-            draw_circle(points[i], 1, "red");
-        }
     }
 
     void draw_circle(vec2 center, float r, const std::string& color="black") {
@@ -116,7 +114,7 @@ void draw_to_svg(svg_img& img,
 }
 
 void draw_to_svg(const std::string& file, const sugiyama_layout& l, const drawing_options& opts) {
-    svg_img img(file, l.dimensions());
+    svg_img img(file, l.dimensions(), opts.margin);
     for (const auto& node : l.vertices()) {
         img.draw_circle(node.pos, l.attribs().node_size);
         img.draw_text(node.pos, opts.use_labels ? opts.labels.at(node.u) : std::to_string(node.u), opts.font_size );
