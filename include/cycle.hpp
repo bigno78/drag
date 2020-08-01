@@ -5,6 +5,8 @@
 
 #include "subgraph.hpp"
 
+namespace drag {
+
 namespace detail {
 
 /**
@@ -98,4 +100,6 @@ private:
     }
 };
 
-} //namespace detail
+} // namespace detail
+
+} // namespace drag

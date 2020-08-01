@@ -3,6 +3,8 @@
 #include <cmath>
 #include <ostream>
 
+namespace drag {
+
 struct vec2 {
     float x, y;
 
@@ -64,4 +66,4 @@ inline float cross(vec2 u, vec2 v) {
     return u.x*v.y - u.y*v.x;
 }
 
-
+} // namespace drag

@@ -2,6 +2,8 @@
 
 #ifdef REPORTING
 
+namespace drag {
+
 namespace report {
 
     // network simplex
@@ -21,5 +23,7 @@ namespace report {
         inline std::vector<int> random_final;
     //}
 }
+
+} // namespace drag
 
 #endif

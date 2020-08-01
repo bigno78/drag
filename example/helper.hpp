@@ -6,6 +6,8 @@
 #include <iostream>
 #include <string>
 
+namespace drag {
+
 auto now() {
     return std::chrono::high_resolution_clock::now();
 }
@@ -42,3 +44,5 @@ std::vector< std::string > dir_contents(const std::string& path, const std::stri
 
     return contents;
 }
+
+} // namespace drag

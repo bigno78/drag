@@ -10,6 +10,7 @@
 #include "utils.hpp"
 #include "graph.hpp"
 
+namespace drag {
 
 namespace detail {
 
@@ -258,5 +259,7 @@ std::map<vertex_t, std::string> debug_labels;
 
 
 } //namespace detail
+
+} //namespace drag
 
 #endif

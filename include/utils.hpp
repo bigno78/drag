@@ -6,6 +6,7 @@
 #include "vec2.hpp"
 #include "types.hpp"
 
+namespace drag {
 
 template <typename T> 
 T sgn(T val) { return ( T(0) < val ) - ( val < T(0) ); }
@@ -93,3 +94,5 @@ std::ostream& operator<<(std::ostream& out, const std::vector<T>& vec) {
     }
     return out;
 }
+
+} //namespace drag

@@ -9,6 +9,8 @@
 #include "utils.hpp"
 #include "report.hpp"
 
+namespace drag {
+
 namespace detail {
 
 // ----------------------------------------------------------------------------------------------
@@ -311,3 +313,5 @@ private:
 };
 
 } // namespace detail
+
+} // namespace drag

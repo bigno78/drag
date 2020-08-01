@@ -19,6 +19,7 @@
 bool crossing_enabled = true;
 #endif
 
+namespace drag {
 
 class sugiyama_layout {
     graph g;
@@ -169,5 +170,6 @@ private:
     }
 };
 
+} // namespace drag
 
 #endif

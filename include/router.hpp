@@ -8,6 +8,7 @@
 #include <optional>
 #include <algorithm>
 
+namespace drag {
 
 namespace detail {
 
@@ -453,3 +454,5 @@ private:
 };
 
 } // namespace detail
+
+} // namespace drag

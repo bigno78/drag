@@ -8,6 +8,8 @@
 #include "utils.hpp"
 #include "types.hpp"
 
+namespace drag {
+
 /**
  * Basic clas for representing a directed graph.
  */
@@ -139,3 +141,5 @@ private:
         }
     }
 };
+
+} // namespace drag

@@ -5,6 +5,7 @@
 
 #include "vec2.hpp"
 
+namespace drag {
 
 using vertex_t = unsigned;
 
@@ -36,3 +37,5 @@ struct attributes {
     float loop_angle = 55;       /**< angle determining the point on the node where a loop connects to it */
     float loop_size = node_size; /**< distance which the loop extends from the node*/
 };
+
+} // namespace drag

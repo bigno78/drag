@@ -10,11 +10,11 @@
 #include <string>
 
 void draw_graph(const std::string& in, const std::string& out) {
-    attributes attr;
-    drawing_options opts;
+    drag::attributes attr;
+    drag::drawing_options opts;
 	auto g = parse(in, attr, opts);
 
-	sugiyama_layout l(g, attr);
+	drag::sugiyama_layout l(g, attr);
 	draw_to_svg(out, l, opts);
 }
 
@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
     out = argv[i];
 
     if (print_dir) {
-        auto files = dir_contents(path, ".gv");
+        auto files = drag::dir_contents(path, ".gv");
 		for (const auto& f : files) {
             std::cout << f << "\n";
 			draw_graph(path + f, out + f + ".svg");

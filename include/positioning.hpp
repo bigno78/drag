@@ -14,6 +14,8 @@
 int produce_layout = 0;
 #endif
 
+namespace drag {
+
 namespace detail {
 
 /**
@@ -486,3 +488,5 @@ public:
 };
 
 } // namespace detail
+
+} // namespace drag

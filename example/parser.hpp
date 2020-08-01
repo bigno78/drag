@@ -10,6 +10,8 @@
 #include "types.hpp"
 #include "svg.hpp"
 
+namespace drag {
+
 float to_pt(float x) {
 	return x*72;
 }
@@ -18,7 +20,7 @@ float pt_to_int(float x) {
     return x/72;
 }
 
-bool contains(const std::map<std::string, vertex_t>& nodes, const std::string& n) {
+bool contains(const std::map<std::string, drag::vertex_t>& nodes, const std::string& n) {
     return nodes.count(n) > 0;
 }
 
@@ -44,7 +46,7 @@ float read_float(std::istream& in) {
     return x;
 }
 
-graph parse(const std::string& file, attributes& attr, drawing_options& opts) {
+drag::graph parse(const std::string& file, drag::attributes& attr, drawing_options& opts) {
     std::ifstream in(file);
 
     if (!in) {
@@ -52,8 +54,8 @@ graph parse(const std::string& file, attributes& attr, drawing_options& opts) {
         throw std::invalid_argument("Failed to open '" + file + "'.");
     }
 
-    graph g;
-    std::map<std::string, vertex_t> nodes;
+    drag::graph g;
+    std::map<std::string, drag::vertex_t> nodes;
 
     std::string line;
     while ( std::getline(in, line) ) {
@@ -108,3 +110,5 @@ graph parse(const std::string& file, attributes& attr, drawing_options& opts) {
     }
     return g;
 }
+
+} // namespace drag

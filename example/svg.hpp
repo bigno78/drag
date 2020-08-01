@@ -6,19 +6,23 @@
 #include "vec2.hpp"
 #include "layout.hpp"
 
+namespace drag {
+
 struct drawing_options {
-    std::map<vertex_t, std::string> labels;
+    std::map<drag::vertex_t, std::string> labels;
     float font_size = 12;
     bool use_labels = true;
     float margin = 15;
 };
+
+namespace detail {
 
 class svg_img {
     std::ofstream file;
 
 public:
 
-    svg_img(const std::string& filename, vec2 dims, float margin) : file(filename) {
+    svg_img(const std::string& filename, drag::vec2 dims, float margin) : file(filename) {
         float w = dims.x + 2*margin;
         float h = dims.y + 2*margin;
         file << "<svg xmlns=\"http://www.w3.org/2000/svg\"\n";
@@ -35,7 +39,7 @@ public:
         file << "</svg>\n";
     }
 
-    void draw_polyline(std::vector<vec2> points, const std::string& color="black") {
+    void draw_polyline(std::vector<drag::vec2> points, const std::string& color="black") {
         file << "<polyline ";
         file << "points=\"";
         const char* sep = "";
@@ -48,7 +52,7 @@ public:
         file << "/>\n";
     }
 
-    void draw_circle(vec2 center, float r, const std::string& color="black") {
+    void draw_circle(drag::vec2 center, float r, const std::string& color="black") {
         file << "<circle ";
         file << "cx=\"" << center.x << "\" ";
         file << "cy=\"" << center.y << "\" ";
@@ -59,7 +63,7 @@ public:
         file << "/>\n";
     }
 
-    void draw_text(vec2 pos, const std::string& text, float size, const std::string& color="black") {
+    void draw_text(drag::vec2 pos, const std::string& text, float size, const std::string& color="black") {
         file << "<text ";
         file << "x=\"" << pos.x << "\" ";
         file << "y=\"" << pos.y << "\" ";
@@ -72,7 +76,7 @@ public:
         file << "</text>\n";
     }
 
-    void draw_polygon(const std::vector<vec2>& points, const std::string& color = "black") {
+    void draw_polygon(const std::vector<drag::vec2>& points, const std::string& color = "black") {
         file << "<polygon ";
         file << "points=\"";
         for (auto p : points) {
@@ -85,16 +89,18 @@ public:
 };
 
 
-void draw_arrow(svg_img& img, vec2 from, vec2 to, float size) {
-    vec2 dir = from - to;
+void draw_arrow(svg_img& img, drag::vec2 from, drag::vec2 to, float size) {
+    auto dir = from - to;
     dir = normalized(dir);
     img.draw_polygon( { to, to + size * rotate(dir, 20), to + size * rotate(dir, -20) } );
 }
 
+} // namespace detail
 
-void draw_to_svg(svg_img& img,
-                 const std::vector<node>& nodes,
-                 const std::vector<path>& paths,
+
+void draw_to_svg(detail::svg_img& img,
+                 const std::vector<drag::node>& nodes,
+                 const std::vector<drag::path>& paths,
                  const drawing_options& opts)
 {
     for (const auto& node : nodes) {
@@ -113,8 +119,8 @@ void draw_to_svg(svg_img& img,
     }
 }
 
-void draw_to_svg(const std::string& file, const sugiyama_layout& l, const drawing_options& opts) {
-    svg_img img(file, l.dimensions(), opts.margin);
+void draw_to_svg(const std::string& file, const drag::sugiyama_layout& l, const drawing_options& opts) {
+    detail::svg_img img(file, l.dimensions(), opts.margin);
     for (const auto& node : l.vertices()) {
         img.draw_circle(node.pos, l.attribs().node_size);
         img.draw_text(node.pos, opts.use_labels ? opts.labels.at(node.u) : std::to_string(node.u), opts.font_size );
@@ -129,3 +135,5 @@ void draw_to_svg(const std::string& file, const sugiyama_layout& l, const drawin
         }
     }
 }
+
+} // namespace drag
