@@ -11,4 +11,5 @@ target_compile_features(drag INTERFACE cxx_std_17)
 
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     add_subdirectory(example/)
+    add_subdirectory(stats/)
 endif()

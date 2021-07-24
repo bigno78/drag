@@ -1,12 +1,14 @@
-#include "interface.hpp"
-#include "svg.hpp"
-#include "parser.hpp"
-#include "helper.hpp"
+#include <drag/drag.hpp>
+#include "../example/svg.hpp"
+#include "../example/parser.hpp"
+#include "../example/helper.hpp"
 
 #include <tuple>
 #include <fstream>
 #include <string>
 #include <sstream>
+
+using namespace drag;
 
 void prolong(std::vector<vec2>& points, node from, node to) {
 	vec2 end = points.back();
