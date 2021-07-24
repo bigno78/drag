@@ -7,8 +7,8 @@
 #include <algorithm>
 #include <map>
 
-#include "utils.hpp"
-#include "graph.hpp"
+#include <drag/detail/utils.hpp>
+#include <drag/graph.hpp>
 
 namespace drag {
 
@@ -17,10 +17,6 @@ namespace detail {
 struct edge {
     vertex_t from, to;
 };
-
-// ----------------------------------------------------------------------------------------------
-// --------------------------------------  SUBGRAPH  --------------------------------------------
-// ----------------------------------------------------------------------------------------------
 
 inline bool operator==(edge lhs, edge rhs) { return lhs.to == rhs.to && lhs.from == rhs.from; }
 inline bool operator!=(edge lhs, edge rhs) { return !(lhs == rhs); }
@@ -32,6 +28,9 @@ inline std::ostream& operator<<(std::ostream& out, edge e) {
     return out;
 }
 
+// ----------------------------------------------------------------------------------------------
+// --------------------------------------  SUBGRAPH  --------------------------------------------
+// ----------------------------------------------------------------------------------------------
 
 /**
  * Subgraph of a given graph - subset of its vertices + all edges between those vertices.

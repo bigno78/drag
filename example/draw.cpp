@@ -1,10 +1,11 @@
 //#define REPORTING
 
+#include <drag/drag.hpp>
+#include <drag/detail/report.hpp>
+
 #include "helper.hpp"
-#include "interface.hpp"
 #include "svg.hpp"
 #include "parser.hpp"
-#include "report.hpp"
 
 #include <iostream>
 #include <string>

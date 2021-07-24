@@ -3,7 +3,7 @@
 #include <vector>
 #include <limits>
 
-#include "subgraph.hpp"
+#include <drag/detail/subgraph.hpp>
 
 namespace drag {
 

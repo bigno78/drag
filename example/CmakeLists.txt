@@ -1,0 +1,6 @@
+
+add_executable(draw draw.cpp)
+target_link_libraries(draw drag)
+
+add_executable(example example.cpp)
+target_link_libraries(example drag)

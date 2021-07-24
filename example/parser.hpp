@@ -6,8 +6,9 @@
 #include <sstream>
 #include <stdexcept>
 
-#include "graph.hpp"
-#include "types.hpp"
+#include <drag/graph.hpp>
+#include <drag/types.hpp>
+
 #include "svg.hpp"
 
 namespace drag {

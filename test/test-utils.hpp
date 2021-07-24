@@ -1,19 +1,19 @@
 #pragma once
 
-#include "../src/interface.hpp"
-#include "../src/subgraph.hpp"
-#include "../src/layering.hpp"
+#include <drag/drag.hpp>
+#include <drag/detail/subgraph.hpp>
+#include <drag/detail/layering.hpp>
 
 
-inline detail::subgraph make_subgraph(graph& g) {
-    std::vector<vertex_t> vec;
+inline drag::detail::subgraph make_subgraph(drag::graph& g) {
+    std::vector<drag::vertex_t> vec;
     for (int i = 0; i < g.size(); ++i) {
         vec.push_back(i);
     }
-    return detail::subgraph(g, vec);
+    return drag::detail::subgraph(g, vec);
 }
 
-inline bool has_edge(const detail::subgraph& g, detail::edge e) {
+inline bool has_edge(const drag::detail::subgraph& g, drag::detail::edge e) {
     for (auto v : g.out_neighbours(e.from)) {
         if (v == e.to)
             return true;
@@ -21,7 +21,7 @@ inline bool has_edge(const detail::subgraph& g, detail::edge e) {
     return false;
 }
 
-inline int get_total_edge_length(const detail::hierarchy& h) {
+inline int get_total_edge_length(const drag::detail::hierarchy& h) {
     int total = 0;
     for (auto u : h.g.vertices()) {
         for (auto v : h.g.out_neighbours(u)) {
@@ -31,8 +31,8 @@ inline int get_total_edge_length(const detail::hierarchy& h) {
     return total;
 }
 
-inline graph reversed(const graph& g) {
-    graph output;
+inline drag::graph reversed(const drag::graph& g) {
+    drag::graph output;
     for (auto u : g.vertices()) {
         output.add_node();
     }

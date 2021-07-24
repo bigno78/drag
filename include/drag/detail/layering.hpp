@@ -7,8 +7,8 @@
 #include <optional>
 #include <cassert>
 
-#include "subgraph.hpp"
-#include "report.hpp"
+#include <drag/detail/subgraph.hpp>
+#include <drag/detail/report.hpp>
 
 namespace drag {
 

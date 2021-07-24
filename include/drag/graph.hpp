@@ -5,8 +5,9 @@
 #include <ostream>
 #include <algorithm>
 
-#include "utils.hpp"
-#include "types.hpp"
+#include <drag/types.hpp>
+#include <drag/detail/utils.hpp>
+
 
 namespace drag {
 

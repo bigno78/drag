@@ -5,10 +5,10 @@
 #include <array>
 #include <optional>
 
-#include "utils.hpp"
-#include "subgraph.hpp"
-#include "vec2.hpp"
-#include "layering.hpp"
+#include <drag/detail/utils.hpp>
+#include <drag/detail/subgraph.hpp>
+#include <drag/vec2.hpp>
+#include <drag/detail/layering.hpp>
 
 #ifdef DEBUG_COORDINATE
 int produce_layout = 0;

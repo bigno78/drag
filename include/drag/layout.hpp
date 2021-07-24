@@ -6,14 +6,13 @@
 #include <vector>
 #include <memory>
 
-#include "interface.hpp"
-#include "subgraph.hpp"
+#include <drag/detail/subgraph.hpp>
 
-#include "cycle.hpp"
-#include "layering.hpp"
-#include "positioning.hpp"
-#include "crossing.hpp"
-#include "router.hpp"
+#include <drag/detail/cycle.hpp>
+#include <drag/detail/layering.hpp>
+#include <drag/detail/positioning.hpp>
+#include <drag/detail/crossing.hpp>
+#include <drag/detail/router.hpp>
 
 #ifdef CONTROL_CROSSING
 bool crossing_enabled = true;

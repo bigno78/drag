@@ -3,8 +3,8 @@
 #include <string>
 #include <vector>
 
-#include "vec2.hpp"
-#include "types.hpp"
+#include <drag/vec2.hpp>
+#include <drag/types.hpp>
 
 namespace drag {
 

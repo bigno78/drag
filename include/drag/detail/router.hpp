@@ -1,7 +1,7 @@
 #pragma once
 
-#include "types.hpp"
-#include "subgraph.hpp"
+#include <drag/types.hpp>
+#include <drag/detail/subgraph.hpp>
 
 #include <vector>
 #include <cmath>

@@ -3,8 +3,8 @@
 #include <fstream>
 #include <map>
 
-#include "vec2.hpp"
-#include "layout.hpp"
+#include <drag/vec2.hpp>
+#include <drag/layout.hpp>
 
 namespace drag {
 
