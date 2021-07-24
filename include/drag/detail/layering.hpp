@@ -76,7 +76,7 @@ struct hierarchy {
     }
 };
 
-std::ostream& operator<<(std::ostream& out, const hierarchy& h) {
+inline std::ostream& operator<<(std::ostream& out, const hierarchy& h) {
     /*out << "ranking: [";
     for (auto u : h.g.vertices()) {
         out << u << "(" << h.ranking[u] << "), ";    
@@ -122,7 +122,7 @@ struct long_edge {
  * 
  * @return list of edges which had to be split
  */
-std::vector< long_edge > add_dummy_nodes(hierarchy& h) {
+inline std::vector< long_edge > add_dummy_nodes(hierarchy& h) {
     std::vector< long_edge > split_edges;
 
     // find edges to be split
@@ -181,7 +181,7 @@ struct tree_edge {
     int dir;
 };
 
-std::ostream& operator<<(std::ostream& out, tree_edge e) {
+inline std::ostream& operator<<(std::ostream& out, tree_edge e) {
     out << edge{e.u, e.v} << "| " << e.dir;
     return out;
 }

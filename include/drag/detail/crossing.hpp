@@ -24,7 +24,7 @@ namespace detail {
  * 
  * <u> and <v> need to be on the same layer
  */
-int crossing_number(const hierarchy& h, vertex_t u, vertex_t v) {
+inline int crossing_number(const hierarchy& h, vertex_t u, vertex_t v) {
     int count = 0;
     for (auto out_u : h.g.out_neighbours(u)) {
         for (auto out_v : h.g.out_neighbours(v)) {
@@ -44,7 +44,7 @@ int crossing_number(const hierarchy& h, vertex_t u, vertex_t v) {
 }
 
 // counts the number of crossings between layers with index 'layer' and 'layer - 1'
-int count_layer_crossings(const hierarchy& h, int layer) {
+inline int count_layer_crossings(const hierarchy& h, int layer) {
     const std::vector<vertex_t>& upper = h.layers[layer - 1];
     const std::vector<vertex_t>& lower = h.layers[layer];
     int count = 0;
@@ -68,7 +68,7 @@ int count_layer_crossings(const hierarchy& h, int layer) {
 
 
 // counts the total number of crossings in the hierarchy
-int count_crossings(const hierarchy& h) {
+inline int count_crossings(const hierarchy& h) {
     int count = 0;
     for (int i = 1; i < h.size(); ++i) {
         count += count_layer_crossings(h, i);

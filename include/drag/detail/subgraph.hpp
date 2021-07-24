@@ -253,9 +253,7 @@ struct edge_set {
 };
 
 // FOR DEBUG PURPOUSES
-std::map<vertex_t, std::string> debug_labels;
-
-
+inline std::map<vertex_t, std::string> debug_labels;
 
 } //namespace detail
 
