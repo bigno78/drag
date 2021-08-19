@@ -2,7 +2,7 @@
 
 #include <chrono>
 #include <vector>
-#include <dirent.h>
+#include <filesystem>
 #include <iostream>
 #include <string>
 
@@ -22,24 +22,27 @@ bool ends_with(const std::string& str, const std::string& suffix) {
 	return std::equal(suffix.rbegin(), suffix.rend(), str.rbegin());
 }
 
+/**
+ * Return names of all regular files in the specified directory with the given extension.
+ * 
+ * The names don't contain the directory path.
+ * If no extension or an empty extension is given, returns all regular files.
+ * The extension string needs to start with a dot.
+ * 
+ * @param path            the path to the directory
+ * @param file_extension  the extension to search for, starting with a dot
+ * 
+ * @return all file names in the directory with the extension
+ */
 std::vector< std::string > dir_contents(const std::string& path, const std::string file_extension="") {
     std::vector< std::string > contents;
-    DIR *dir;
-    struct dirent *ent;
-    if ( (dir = opendir(path.c_str())) != NULL ) {
-        
-        while ( (ent = readdir(dir)) != NULL ) {
-           
-            std::string name{ ent->d_name };
-            if (name == "." || name == ".." || !ends_with(name, file_extension)) {
-                continue;
-            }
-            contents.push_back(name);
-        }
-        closedir(dir);
 
-    } else {
-        std::cerr << "cant open dir: " << path << "\n";
+    for (const auto& entry : std::filesystem::directory_iterator(path)) {
+        if (entry.is_regular_file()) {
+            if (file_extension == "" || entry.path().extension() == file_extension) {
+                contents.push_back(entry.path().filename().string());
+            }
+        }
     }
 
     return contents;
