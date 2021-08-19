@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <limits>
 
 #include <drag/vec2.hpp>
 
@@ -37,5 +38,11 @@ struct attributes {
     float loop_angle = 55;       /**< angle determining the point on the node where a loop connects to it */
     float loop_size = node_size; /**< distance which the loop extends from the node*/
 };
+
+namespace detail {
+
+    const vertex_t no_vertex = std::numeric_limits<vertex_t>::max();
+
+} // namespace detail
 
 } // namespace drag
