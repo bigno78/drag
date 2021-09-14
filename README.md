@@ -13,6 +13,8 @@ With that said, a simple application which converts the produced layout into an 
  ## What graphs is it suitable for?
  
 It should be used only for *directed* graphs. In theory one could use it to make a layout of an undirected graph by giving each edge an arbitrary direction. However, the resulting layout wouldn't make much sense and wouldn't convey the information contained in the graph very well. 
+
+If you want to know more about the algorithms used to make this library work, you can check out the first two chapters in my [bachelor's thesis](https://is.muni.cz/th/kmkvd/?lang=en). However, the description of the api in the thesis is a bit outdated and shouldn't be used.
  
 
 

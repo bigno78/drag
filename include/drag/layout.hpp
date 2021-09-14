@@ -13,6 +13,7 @@
 #include <drag/detail/positioning.hpp>
 #include <drag/detail/crossing.hpp>
 #include <drag/detail/router.hpp>
+#include <drag/detail/algo.hpp>
 
 #ifdef CONTROL_CROSSING
 bool crossing_enabled = true;
