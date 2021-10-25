@@ -53,6 +53,9 @@ _deps
 # External projects
 *-prefix/
 
+### Visual Studio ###
+.vs/
+
 ### VisualStudioCode ###
 .vscode/*
 !.vscode/settings.json
