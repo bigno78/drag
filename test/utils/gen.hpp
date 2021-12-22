@@ -1,10 +1,13 @@
 #pragma once
 
 #include <drag/graph.hpp>
+#include <drag/detail/subgraph.hpp> // edge
+#include <drag/detail/algo.hpp> // split
 #include <drag/detail/utils.hpp>
 
 #include <random>
 #include <algorithm>
+#include <assert.h>
 
 namespace drag {
 
