@@ -1,7 +1,7 @@
 #pragma once
 
-#include <drag/drag.hpp>
 #include <drag/detail/subgraph.hpp>
+#include <drag/drag.hpp>
 #include <drag/detail/layering.hpp>
 
 

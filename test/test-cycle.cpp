@@ -1,11 +1,13 @@
+#include "catch.hpp"
+#include "utils/test-utils.hpp"
+
+#include <drag/detail/cycle.hpp>
+
 #include <memory>
 #include <iostream>
 
-#include "catch.hpp"
-#include "../cycle.hpp"
-#include "test-utils.hpp"
-
-using namespace detail;
+using namespace drag;
+using namespace drag::detail;
 
 
 bool check_acyclic_(const subgraph& g, std::vector<int>& marks, vertex_t u) {
@@ -48,7 +50,7 @@ TEST_CASE("one cycle") {
                     .add_edge(0, 1)
                     .add_edge(1, 0)
                     .build();
-    subgraph g = make_sub(source);
+    subgraph g = make_subgraph(source);
 
     std::unique_ptr<cycle_removal> c = std::make_unique<dfs_removal>();
     c->run(g);
@@ -64,7 +66,7 @@ TEST_CASE("long cycle") {
                     .add_edge(3, 4)
                     .add_edge(4, 0)
                     .build();
-    subgraph g = make_sub(source);
+    subgraph g = make_subgraph(source);
 
     std::unique_ptr<cycle_removal> c = std::make_unique<dfs_removal>();
     c->run(g);
@@ -80,7 +82,7 @@ TEST_CASE("two cycles with shared edge") {
                     .add_edge(1, 3)
                     .add_edge(3, 0)
                     .build();
-    subgraph g = make_sub(source);
+    subgraph g = make_subgraph(source);
 
     std::unique_ptr<cycle_removal> c = std::make_unique<dfs_removal>();
     c->run(g);
@@ -98,7 +100,7 @@ TEST_CASE("two cycles without shared edge") {
                     .add_edge(3, 4)
                     .add_edge(4, 0)
                     .build();
-    subgraph g = make_sub(source);
+    subgraph g = make_subgraph(source);
 
     std::unique_ptr<cycle_removal> c = std::make_unique<dfs_removal>();
     c->run(g);

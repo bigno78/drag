@@ -1,11 +1,13 @@
-#include<algorithm>
-
 #include "catch.hpp"
-//#include "../interface.hpp"
-#include "../layering.hpp"
-#include "test-utils.hpp"
+#include "utils/test-utils.hpp"
 
-using namespace detail;
+#include <drag/detail/layering.hpp>
+
+#include <algorithm>
+
+using namespace drag;
+using namespace drag::detail;
+
 
 void check_hierarchy(const hierarchy& h) {
     int layer_idx = 0;
