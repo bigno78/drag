@@ -15,7 +15,7 @@ struct test_config {
 
 struct RandomizedTest {
 
-    std::function<bool(const drag::graph&)> func;
+    std::function<bool(drag::graph&)> func;
     std::string name;
     test_config config;
 
