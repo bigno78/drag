@@ -8,20 +8,22 @@ In a nutshell, you provide a directed graph and the library produces a nice look
 
 It is important to note that this is the main purpose of the library. It computes a layout. It is not meant for converting this layout into an image or styling this image. It is meant as a backend for such applications.
 
-Nevertheless, it contains a simple drawing api for creating quick and dirty svg images of the produced layouts. However, it is very limited in what it can do. There is also an example command-line application which uses this api. If you want to know more read this [section](#producing-svg-images).
+Nevertheless, it contains a simple drawing api for creating quick and dirty svg images of the produced layouts. However, it is very limited in what it can do. There is also an example command-line application which uses this api. If you want to know more about that read this [section](#producing-svg-images).
 
-## Can I see some example please? 
+## Can I see some examples please? 
 
-Sure thing.
+Sure thing. Check them out.
 
 ![Layout of a tree](assets/tree.svg "Layout of a tree")
 ![Layout of a dag](assets/graph.svg "Layout of a dag")
 
 ## What graphs is it suitable for?
 
-The short answer is *directed* *acyclic* graphs. They can be *disconnected* in which each connected component is layed out separately.
+The short answer is *directed* *acyclic* graphs. They can be *disconnected* in which case each connected component is layed out separately.
 
-These requirements come from the fact that the library produces layered layout. That means the vertices are placed on horizontal lines and all edges are pointed downwards. You can see exactly that in the images above. This layout is most suitable for graphs representing some sort of hierarchy or ordering - i.e. *directed* *acyclic* graphs. Such a layout makes it easy to see that some vertices are in some sense *superior* to others just by looking if they are above or below. It also makes it easier to trace paths from a vertex since these will always go downwards.
+These requirements come from the fact that the library produces layered layouts. That means the vertices are placed on horizontal lines and all edges are pointed downwards. You can see exactly that in the images above. 
+
+This layout is most suitable for graphs representing some sort of hierarchy or ordering - i.e. *directed* *acyclic* graphs. Such a layout makes it easy to see that some vertices are in some sense *superior* to others just by looking if they are above or below. It also makes it easier to trace paths from a vertex since these will always go downwards.
 
 Nevertheless, the requirement for the graph to be *acyclic* is not strict. The library can cope with cycles but the produced images might not be ideal since this kind of layout is not suitable for cycles - some edges must point upwards and this defeats the purpose of the layout. For small number of cycles it can be fine but the more cycles the worse it gets.
 
