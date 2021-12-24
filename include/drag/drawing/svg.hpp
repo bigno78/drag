@@ -98,9 +98,22 @@ public:
         file << "<svg xmlns='http://www.w3.org/2000/svg'\n";
         file << "\twidth='" << w << "pt' height='" << h << "pt'\n";
         file << "\tviewBox='0 0 " << m_size.x + 2*m_margin << " " << m_size.y + 2*m_margin << "'>\n";
+        
+        // draw a background polygon
+        file << "<polygon fill='white' stroke='transparent' ";
+        file << "points='";
+        file << "0,0 ";
+        file << "0," << h << " ";
+        file << w << "," << h << " ";
+        file << w << ",0";
+        file << "'/>\n";
+        
         file << "<g transform='translate(" << m_margin << ", " << m_margin << ")'>\n";
+        
         file << m_data.str();
+
         file << "</g>\n";
+
         file << "</svg>\n";
     }
 

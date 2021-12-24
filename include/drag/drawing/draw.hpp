@@ -9,7 +9,7 @@ struct drawing_options {
     std::map<drag::vertex_t, std::string> labels;
     std::map<drag::vertex_t, std::string> colors;
     float font_size = 12;
-    float margin = 15;
+    float margin = 10;
     bool use_labels = true;
 
     static drawing_options from_colors(const std::map<drag::vertex_t, std::string>& colors) {
