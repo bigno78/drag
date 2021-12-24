@@ -106,16 +106,14 @@ TEST_CASE("graph builder") {
                 .add_edge(1, 3)
                 .build();
 
-    REQUIRE(g.size() == 4);
-    assert_vertices_equal(g, {0, 1, 2, 3});
+    REQUIRE(g.size() == 3);
+    assert_vertices_equal(g, {0, 1, 2});
 
     assert_neighbours_equal(g.out_neighbours(0), {1});
-    assert_neighbours_equal(g.out_neighbours(1), {3});
+    assert_neighbours_equal(g.out_neighbours(1), {2});
     assert_neighbours_equal(g.out_neighbours(2), {});
-    assert_neighbours_equal(g.out_neighbours(3), {});
 
     assert_neighbours_equal(g.in_neighbours(0), {});
     assert_neighbours_equal(g.in_neighbours(1), {0});
-    assert_neighbours_equal(g.in_neighbours(2), {});
-    assert_neighbours_equal(g.in_neighbours(3), {1});
+    assert_neighbours_equal(g.in_neighbours(2), {1});
 }
