@@ -6,6 +6,7 @@
 #include <vector>
 #include <algorithm>
 #include <map>
+#include <numeric> // iota
 
 #include <drag/detail/utils.hpp>
 #include <drag/graph.hpp>
