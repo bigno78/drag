@@ -1,0 +1,39 @@
+<svg xmlns='http://www.w3.org/2000/svg'
+	viewBox='0 0 210 216'>
+<g transform='translate(15, 15)'>
+<circle cx="90" cy="15" r="15" stroke="black" stroke-width="1" fill="white" />
+<text x="90" y="15" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >0</text>
+<circle cx="40" cy="67" r="15" stroke="black" stroke-width="1" fill="white" />
+<text x="40" y="67" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >1</text>
+<circle cx="140" cy="67" r="15" stroke="black" stroke-width="1" fill="white" />
+<text x="140" y="67" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >2</text>
+<circle cx="40" cy="119" r="15" stroke="black" stroke-width="1" fill="white" />
+<text x="40" y="119" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >3</text>
+<circle cx="15" cy="171" r="15" stroke="black" stroke-width="1" fill="white" />
+<text x="15" y="171" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >4</text>
+<circle cx="65" cy="171" r="15" stroke="black" stroke-width="1" fill="white" />
+<text x="65" y="171" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >5</text>
+<circle cx="115" cy="119" r="15" stroke="black" stroke-width="1" fill="white" />
+<text x="115" y="119" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >6</text>
+<circle cx="165" cy="119" r="15" stroke="black" stroke-width="1" fill="white" />
+<text x="165" y="119" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >7</text>
+<circle cx="115" cy="171" r="15" stroke="black" stroke-width="1" fill="white" />
+<text x="115" y="171" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >8</text>
+<polyline points="79.6034 25.8125 50.3966 56.1875" stroke="black" fill="none" />
+<polygon points="50.3966,56.1875 52.8252,50.701 55.7837,53.5457 " stroke="black" />
+<polyline points="100.397 25.8125 129.603 56.1875" stroke="black" fill="none" />
+<polygon points="129.603,56.1875 124.216,53.5457 127.175,50.701 " stroke="black" />
+<polyline points="40 82 40 104" stroke="black" fill="none" />
+<polygon points="40,104 37.9479,98.3618 42.0521,98.3618 " stroke="black" />
+<polyline points="33.5006 132.519 21.4994 157.481" stroke="black" fill="none" />
+<polygon points="21.4994,157.481 22.0929,151.511 25.7919,153.289 " stroke="black" />
+<polyline points="46.4994 132.519 58.5006 157.481" stroke="black" fill="none" />
+<polygon points="58.5006,157.481 54.2081,153.289 57.9071,151.511 " stroke="black" />
+<polyline points="133.501 80.5188 121.499 105.481" stroke="black" fill="none" />
+<polygon points="121.499,105.481 122.093,99.5106 125.792,101.289 " stroke="black" />
+<polyline points="146.499 80.5188 158.501 105.481" stroke="black" fill="none" />
+<polygon points="158.501,105.481 154.208,101.289 157.907,99.5106 " stroke="black" />
+<polyline points="115 134 115 156" stroke="black" fill="none" />
+<polygon points="115,156 112.948,150.362 117.052,150.362 " stroke="black" />
+</g>
+</svg>
