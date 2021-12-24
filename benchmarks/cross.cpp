@@ -1,6 +1,6 @@
 #include "stats.hpp"
-#include "../test/utils/gen.hpp"
 
+#include <drag/detail/gen.hpp>
 #include <drag/detail/subgraph.hpp>
 #include <drag/detail/layering.hpp>
 #include <drag/detail/crossing.hpp>

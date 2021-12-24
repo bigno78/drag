@@ -1,9 +1,9 @@
+#include <drag/detail/gen.hpp>
+#include <drag/drawing/draw.hpp>
+
 #include <string>
 #include <vector>
 #include <functional>
-
-#include "gen.hpp"
-#include "drag/drawing/draw.hpp"
 
 
 struct test_config {
