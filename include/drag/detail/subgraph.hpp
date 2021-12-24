@@ -47,13 +47,23 @@ class subgraph {
 public:
     subgraph(graph& g, std::vector< vertex_t > vertices) 
         : m_source(g)
-        , m_vertices(std::move(vertices)) {
-            if (!m_vertices.empty()) {
-                m_dummy_border = 1 + *std::max_element(m_vertices.begin(), m_vertices.end());
-            } else {
-                m_dummy_border = 0;
-            }
+        , m_vertices(std::move(vertices))
+    {
+        if (!m_vertices.empty()) {
+            m_dummy_border = 1 + *std::max_element(m_vertices.begin(), m_vertices.end());
+        } else {
+            m_dummy_border = 0;
         }
+    }
+
+    subgraph(graph& g) 
+        : m_source(g)
+        , m_vertices(g.size())
+    {
+        // set the vertices to numbers from `0` to `g.size() - 1` 
+        std::iota(m_vertices.begin(), m_vertices.end(), 0);
+        m_dummy_border = g.size();
+    }
 
     unsigned size() const { return m_vertices.size(); }
 
