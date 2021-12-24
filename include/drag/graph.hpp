@@ -20,6 +20,12 @@ namespace drag {
 class graph {
 public:
 
+    float node_size = 25;         /**< radius of all nodes */
+    float node_dist = 20;         /**< minimum distance between borders of 2 nodes */
+    float layer_dist = 40;        /**< minimum distance between borders of nodes in 2 different layers */
+    float loop_angle = 55;        /**< angle determining the point on the node where a loop connects to it */
+    float loop_size = node_size;  /**< distance which the loop extends from the node*/
+
     /**
      * Add a new vertex to the graph.
      * 

@@ -52,7 +52,10 @@ class sugiyama_layout {
                         std::make_unique< detail::router >(nodes, paths, attrs);
 
 public:
-    sugiyama_layout(graph g) : g(g), original_vertex_count(g.size()) {
+    sugiyama_layout(graph g) 
+        : g(g)
+        , original_vertex_count(g.size())
+        , attrs( attributes{g.node_size, g.node_dist, g.layer_dist, g.loop_angle, g.loop_size} ) {
         build();
     }
 
