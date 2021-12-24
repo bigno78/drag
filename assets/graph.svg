@@ -1,26 +1,28 @@
 <svg xmlns='http://www.w3.org/2000/svg'
-	viewBox='0 0 232.5 336'>
-<g transform='translate(15, 15)'>
+	width='222.5pt' height='326pt'
+	viewBox='0 0 222.5 326'>
+<polygon fill='white' stroke='transparent' points='0,0 0,326 222.5,326 222.5,0'/>
+<g transform='translate(10, 10)'>
 <circle cx="51.75" cy="18" r="18" stroke="black" stroke-width="1" fill="white" />
-<text x="51.75" y="18" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="13" font-family="Times,serif" >0</text>
+<text x="51.75" y="18" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >0</text>
 <circle cx="159.75" cy="18" r="18" stroke="black" stroke-width="1" fill="white" />
-<text x="159.75" y="18" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="13" font-family="Times,serif" >1</text>
+<text x="159.75" y="18" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >1</text>
 <circle cx="85.5" cy="85.5" r="18" stroke="black" stroke-width="1" fill="white" />
-<text x="85.5" y="85.5" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="13" font-family="Times,serif" >2</text>
+<text x="85.5" y="85.5" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >2</text>
 <circle cx="18" cy="85.5" r="18" stroke="black" stroke-width="1" fill="white" />
-<text x="18" y="85.5" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="13" font-family="Times,serif" >3</text>
+<text x="18" y="85.5" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >3</text>
 <circle cx="184.5" cy="85.5" r="18" stroke="black" stroke-width="1" fill="white" />
-<text x="184.5" y="85.5" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="13" font-family="Times,serif" >4</text>
+<text x="184.5" y="85.5" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >4</text>
 <circle cx="18" cy="153" r="18" stroke="black" stroke-width="1" fill="white" />
-<text x="18" y="153" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="13" font-family="Times,serif" >5</text>
+<text x="18" y="153" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >5</text>
 <circle cx="184.5" cy="153" r="18" stroke="black" stroke-width="1" fill="white" />
-<text x="184.5" y="153" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="13" font-family="Times,serif" >6</text>
+<text x="184.5" y="153" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >6</text>
 <circle cx="110.25" cy="220.5" r="18" stroke="black" stroke-width="1" fill="white" />
-<text x="110.25" y="220.5" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="13" font-family="Times,serif" >7</text>
+<text x="110.25" y="220.5" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >7</text>
 <circle cx="135" cy="288" r="18" stroke="black" stroke-width="1" fill="white" />
-<text x="135" y="288" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="13" font-family="Times,serif" >8</text>
+<text x="135" y="288" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >8</text>
 <circle cx="18" cy="220.5" r="18" stroke="black" stroke-width="1" fill="white" />
-<text x="18" y="220.5" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="13" font-family="Times,serif" >9</text>
+<text x="18" y="220.5" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >9</text>
 <polyline points="59.7998 34.0997 77.4502 69.4003" stroke="black" fill="none" />
 <polygon points="77.4502,69.4003 72.2218,64.4501 76.627,62.2475 " stroke="black" />
 <polyline points="43.7002 34.0997 26.0498 69.4003" stroke="black" fill="none" />

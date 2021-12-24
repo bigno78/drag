@@ -14,7 +14,8 @@ Nevertheless, it contains a simple drawing api for creating quick and dirty svg 
 
 Sure thing.
 
-<img src="assets/tree.svg" width="400"> <img src="assets/graph.svg" width="350">
+![Layout of a tree](assets/tree.svg "Layout of a tree")
+![Layout of a dag](assets/graph.svg "Layout of a dag")
 
 ## What graphs is it suitable for?
 

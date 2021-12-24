@@ -1,6 +1,8 @@
 <svg xmlns='http://www.w3.org/2000/svg'
-	viewBox='0 0 268.5 336'>
-<g transform='translate(15, 15)'>
+	width='258.5pt' height='326pt'
+	viewBox='0 0 258.5 326'>
+<polygon fill='white' stroke='transparent' points='0,0 0,326 258.5,326 258.5,0'/>
+<g transform='translate(10, 10)'>
 <circle cx="119.25" cy="18" r="18" stroke="black" stroke-width="1" fill="white" />
 <text x="119.25" y="18" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >0</text>
 <circle cx="51.75" cy="85.5" r="18" stroke="black" stroke-width="1" fill="white" />
