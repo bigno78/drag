@@ -1,3 +1,5 @@
+#pragma once
+
 #include <drag/layout.hpp>
 #include <drag/drawing/svg.hpp>
 
