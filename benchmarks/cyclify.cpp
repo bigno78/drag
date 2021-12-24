@@ -1,11 +1,14 @@
-#include <drag/graph.hpp>
 #include "../example/parser.hpp"
 #include "../example/helper.hpp"
+
+#include <drag/graph.hpp>
+#include <drag/drawing/draw.hpp>
 
 #include <random>
 #include <set>
 
 using namespace drag;
+
 
 void dfs_preds(const graph& g, vertex_t u, std::vector<std::vector<vertex_t>>& tp) {
 	if (!tp[u].empty()) {

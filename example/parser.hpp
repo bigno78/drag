@@ -1,15 +1,15 @@
 #pragma once
 
+#include <drag/graph.hpp>
+#include <drag/types.hpp>
+#include <drag/drawing/draw.hpp>
+
 #include <fstream>
 #include <string>
 #include <map>
 #include <sstream>
 #include <stdexcept>
 
-#include <drag/graph.hpp>
-#include <drag/types.hpp>
-
-#include "svg.hpp"
 
 namespace drag {
 
