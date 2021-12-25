@@ -29,6 +29,21 @@ Nevertheless, the requirement for the graph to be *acyclic* is not strict. The l
 
 ## How to use the library in your project
 
+The library is header-only so using it is very simple,, the only requirement is a compiler supporting `c++17`. There are couple of options how to include the library in your project.
+
+One way is to just grab the `drag` subdirectory from the `include` directory and place it in your project. Then you can happily include the headers that you need. The two most important ones are `drag/drag.hpp` which includes everything necessary to create a layout and `drag/drawing/draw.hpp` which contains the svg drawing interface.
+
+The second option is to use `cmake`. To do that, grab the whole repository and place it inside your project. Then in your `CMakeLists.txt` you can add the library as a subdirectory and link to it like so:
+
+```CMake
+add_subdirectory(drag)
+
+add_executable(your-target your-source.cpp)
+target_link_libraries(your-target drag)
+```
+
+This will ensure that `your-target` has the proper include directories set and is compiled with `c++17`.
+
 ## Getting started
 
 ### Creating the input graph
