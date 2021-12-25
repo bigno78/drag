@@ -46,6 +46,31 @@ This will ensure that `your-target` has the proper include directories set and i
 
 ## Getting started
 
+A simple complete and working example for creating and visualizing a layout of a graph might look something like this.
+
+```C++
+#include <drag/drag.hpp>
+#include <drag/drawing/draw.hpp>
+
+int main() {
+    drag::graph g;
+
+    auto a = g.add_node();
+    auto b = g.add_node();
+    auto c = g.add_node();
+
+    g.add_edge(a, b);
+    g.add_edge(a, c);
+
+    drag::sugiyama_layout layout(g);
+
+    auto image = drag::draw_svg_image(layout, drag::drawing_options{});
+    image.save("image.svg");
+}
+```
+
+A more detailed description follows in the next sections.
+
 ### Creating the input graph
 
 First thing to do is to convert whatever you are trying to draw as a graph (be it your own graph representation or some data) into the graph representation of the library, i.e. you need to create an instance of `graph`. This can be done by creating nodes and adding edges between them.
@@ -114,7 +139,7 @@ Similarly `layout.edges()` returns a vector of the edges represented using the `
 struct path {
     vertex_t from, to;           // the vertex identifiers of endpoints of the corresponding edge
     std::vector< vec2 > points;  // control points of the poly-line representing the edge
-    bool bidirectional = false;  // is the edge bidirectional?
+    bool bidirectional;          // is the edge bidirectional?
 };
 ```
 
