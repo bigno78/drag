@@ -5,6 +5,7 @@
 #include <sstream>
 #include <map>
 #include <array>
+#include <stdexcept>
 
 #include <drag/vec2.hpp>
 #include <drag/layout.hpp>
@@ -92,6 +93,10 @@ public:
 
     void save(const std::string& filename) const {
         std::ofstream file(filename);
+
+        if (!file) {
+            throw std::invalid_argument("Failed to save svg immage. Cannot open file '" + filename + "'");
+        }
 
         float w = m_size.x + 2*m_margin;
         float h = m_size.y + 2*m_margin;
