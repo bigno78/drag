@@ -5,6 +5,12 @@ project(drag)
 
 add_library(drag INTERFACE)
 
+if(WIN32)
+    add_definitions(-D_USE_MATH_DEFINES)
+    find_path(DIRENT_INCLUDE_DIRS "dirent.h")
+    target_include_directories(drag INTERFACE ${DIRENT_INCLUDE_DIRS})
+endif()
+
 target_include_directories(drag INTERFACE include/)
 target_compile_features(drag INTERFACE cxx_std_17)
 

@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
         auto files = drag::dir_contents(path, ".gv");
 		for (const auto& f : files) {
             std::cout << f << "\n";
-			draw_graph(path + f, out + f + ".svg");
+			draw_graph(path + '/' + f, out + '/' + f + ".svg");
 		}
     } else {
 		draw_graph(path, out);
