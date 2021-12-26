@@ -44,6 +44,10 @@ target_link_libraries(your-target drag)
 
 This will ensure that `your-target` has the proper include directories set and is compiled with `c++17`.
 
+## Compiling the examples
+
+You can read more about that [here](examples/../README.md).
+
 ## Getting started
 
 A simple complete and working example for creating and visualizing a layout of a graph might look something like this.
