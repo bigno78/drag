@@ -46,7 +46,7 @@ This will ensure that `your-target` has the proper include directories set and i
 
 ## Compiling the examples
 
-You can read more about that [here](examples/../README.md).
+You can read more about that [here](example/README.md).
 
 ## Getting started
 
@@ -153,7 +153,7 @@ A concrete example of using the layout can be seen in the implementation of the 
 
 ## Producing SVG images
 
-This section describes the interface for creating svg images. There is also an example command-line application which can be used for drawing graphs into svg - more information [TODO](here).
+This section describes the interface for creating svg images. There is also an example command-line application which can be used for turning graphs into svg images - more information [TODO](here).
 
 ```C++
 #include <drag/drag.hpp>
@@ -189,7 +189,7 @@ This a short example of how to use the drawing interface. It produces the follow
 
 !["Colorful graph image"](assets/image.svg "Colorful graph image")
 
-Images are produced using the function `draw_svg_image`. It can be used to draw both graphs and layouts. The styling of the image is done through `drawing_options`. It enables you to set several things.
+Images are produced using the function `draw_svg_image`. It can be used to draw both graphs and layouts. The styling of the image is done through `drawing_options`. It enables you to customize the following:
  
  * **node labels** - These can be set through `drawing_options::labels` and are displayed inside the nodes. If no label for a node is specified its id will be used - i.e. a number from `0` to `n - 1` where `n` is the number of nodes. You can disable the labels completely by setting `drawing_options::use_labels` to `false`. 
  
