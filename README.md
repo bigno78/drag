@@ -153,7 +153,7 @@ A concrete example of using the layout can be seen in the implementation of the 
 
 ## Producing SVG images
 
-This section describes the interface for creating svg images. There is also an example command-line application which can be used for drawing graphs into svg - more information [TODO](here).
+This section describes the interface for creating svg images. There is also an example command-line application which can be used for turning graphs into svg images - more information [TODO](here).
 
 ```C++
 #include <drag/drag.hpp>
