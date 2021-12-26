@@ -8,7 +8,7 @@ In a nutshell, you provide a directed graph and the library produces a nice look
 
 It is important to note that this is the main purpose of the library. It computes a layout. It is not meant for converting this layout into an image or styling this image. It is meant as a backend for such applications.
 
-Nevertheless, it contains a simple drawing api for creating quick and dirty svg images of the produced layouts. However, it is very limited in what it can do. There is also an example command-line application which uses this api. If you want to know more about that read this [section](#producing-svg-images).
+Nevertheless, it contains a simple drawing api for creating quick and dirty svg images of the produced layouts but it is very limited in what it can do. There is also an example command-line application which uses this api. If you want to know more about that read this [section](#producing-svg-images).
 
 ## Can I see some examples please? 
 
@@ -29,7 +29,7 @@ Nevertheless, the requirement for the graph to be *acyclic* is not strict. The l
 
 ## How to use the library in your project
 
-The library is header-only so using it is very simple,, the only requirement is a compiler supporting `c++17`. There are couple of options how to include the library in your project.
+The library is header-only so using it is very simple, the only requirement is a compiler supporting `c++17`. There are couple of options how to include the library in your project.
 
 One way is to just grab the `drag` subdirectory from the `include` directory and place it in your project. Then you can happily include the headers that you need. The two most important ones are `drag/drag.hpp` which includes everything necessary to create a layout and `drag/drawing/draw.hpp` which contains the svg drawing interface.
 
@@ -143,10 +143,53 @@ struct path {
 };
 ```
 
-The first and last point of the paths are computed such they lie on the border of the corresponding points.
+The first and last point of the paths are computed such they lie on the border of the corresponding nodes.
 
 A concrete example of using the layout can be seen in the implementation of the svg api in `draw.hpp`.
 
 ## Producing SVG images
 
-TODO
+This section describes the interface for creating svg images. There is also an example command-line application which can be used for drawing graphs into svg - more information [TODO](here).
+
+```C++
+#include <drag/drag.hpp>
+#include <drag/drawing/draw.hpp>
+
+int main() {
+    drag::graph g;
+
+    auto a = g.add_node();
+    auto b = g.add_node();
+    auto c = g.add_node();
+
+    g.add_edge(a, b);
+    g.add_edge(a, c);
+
+    drag::drawing_options opts;
+
+    opts.labels[a] = "a";
+    opts.labels[b] = "b";
+    opts.labels[c] = "c";
+
+    opts.colors[a] = "blue";
+    opts.colors[b] = "green";
+
+    opts.edge_colors[{a, b}] = "red";
+
+    auto image = drag::draw_svg_image(g, opts);
+    image.save("image.svg");
+}
+```
+
+This a short example of how to use the drawing interface. It produces the following graph.
+
+!["Colorful graph image"](assets/image.svg "Colorful graph image")
+
+Images are produced using the function `draw_svg_image`. It can be used to draw both graphs and layouts. The styling of the image is done through `drawing_options`. It enables you to set several things.
+ 
+ * **node labels** - These can be set through `drawing_options::labels` and are displayed inside the nodes. If no label for a node is specified its id will be used - i.e. a number from `0` to `n - 1` where `n` is the number of nodes. You can disable the labels completely by setting `drawing_options::use_labels` to `false`. 
+ 
+ * **node colors** - These can be set using `drawing_options::colors`. The default color is black. The color is given as a string containing anything that might pass as a color specifier in svg. Among other things that includes a name of a color (as in the code snippet) or rgb code such as `"rgb(0, 0, 255)"` or in the hexadecimal form as `"#0000ff"`.
+ * **edge colors** - Can be set using `drawing_options::edge_colors` and work the same way as node colors.
+ * **font size** - Is set using `drawing_options::font_size` and determines the size of labels.
+ * **margin** - Can be set using `drawing_options::margin` and determines the amount of space around the graph.
