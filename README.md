@@ -8,7 +8,7 @@ In a nutshell, you provide a directed graph and the library produces a nice look
 
 It is important to note that this is the main purpose of the library. It computes a layout. It is not meant for converting this layout into an image or styling this image. It is meant as a backend for such applications.
 
-Nevertheless, it contains a simple drawing api for creating quick and dirty svg images of the produced layouts but it is very limited in what it can do. There is also an example command-line application which uses this api. If you want to know more about that read this [section](#producing-svg-images).
+Nevertheless, it contains a simple drawing api for creating quick and dirty svg images of the produced layouts but it is very limited in what it can do. If you want to know more about that read this [section](#producing-svg-images).
 
 ## Can I see some examples please? 
 
