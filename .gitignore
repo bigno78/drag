@@ -74,3 +74,4 @@ _deps
 *build*/
 out/
 stuff/
+.vs/

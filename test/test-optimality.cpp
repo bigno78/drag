@@ -28,7 +28,11 @@ int main(int argc, char **argv) {
         return res == expected;
     };
 
-    test_config small_config  = { .n = 15, .m = 22, .count = 20 };
+    test_config small_config;
+    small_config.n = 15;
+    small_config.m = 22;
+    small_config.count = 20;
+
     tester.register_test("low_density", small_config, test_function);
 
     return tester.run_tests();

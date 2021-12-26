@@ -21,7 +21,7 @@ namespace fs = std::filesystem;
  * 
  * @return all files in the directory with the given extension
  */
-std::vector<fs::path> dir_contents(const std::string& dir_path, const std::string file_extension="") {
+std::vector<fs::path> dir_contents(const fs::path& dir_path, const std::string file_extension="") {
     std::vector<fs::path> contents;
 
     for (const auto& entry : std::filesystem::directory_iterator(dir_path)) {
