@@ -3,11 +3,16 @@
 #include <drag/layout.hpp>
 #include <drag/drawing/svg.hpp>
 
+#include <string>
+#include <map>
+#include <tuple>
+
 namespace drag {
 
 struct drawing_options {
     std::map<drag::vertex_t, std::string> labels;
     std::map<drag::vertex_t, std::string> colors;
+    std::map<std::pair<drag::vertex_t, drag::vertex_t>, std::string> edge_colors;
     float font_size = 12;
     float margin = 10;
     bool use_labels = true;
@@ -21,6 +26,20 @@ struct drawing_options {
 
 namespace detail {
 
+void draw_edge(svg_image& img, const path& p, const drawing_options& opts, float arrow_size) {
+    // get the color
+    auto it = opts.edge_colors.find( {p.from, p.to} );
+    const auto& color = it == opts.edge_colors.end() ? "black" : it->second;
+
+    // draw the lines
+    img.draw_polyline(p.points, color);
+
+    // draw the arrow
+    img.draw_arrow(p.points[p.points.size() - 2], p.points.back(), arrow_size, color);
+    if (p.bidirectional) {
+        img.draw_arrow(p.points[1], p.points.front(), arrow_size, color);
+    }
+}
 
 } // namespace detail
 
@@ -36,11 +55,7 @@ svg_image draw_svg_image(const drag::sugiyama_layout& l, const drawing_options& 
 
     float arrow_size = 0.4 * l.attribs().node_size;
     for (const auto& path : l.edges()) {
-        img.draw_polyline(path.points);
-        img.draw_arrow(path.points[path.points.size() - 2], path.points.back(), arrow_size);
-        if (path.bidirectional) {
-            img.draw_arrow(path.points[1], path.points.front(), arrow_size);
-        }
+        detail::draw_edge(img, path, opts, arrow_size);
     }
 
     return img;

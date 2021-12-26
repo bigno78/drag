@@ -71,13 +71,14 @@ public:
         }
         m_data << "\" ";
         m_data << "stroke=\"" << color << "\" ";
+        m_data << "fill=\"" << color << "\" ";
         m_data << "/>\n";
     }
 
-    void draw_arrow(drag::vec2 from, drag::vec2 to, float size) {
+    void draw_arrow(drag::vec2 from, drag::vec2 to, float size, const std::string& color = "black") {
         auto dir = from - to;
         dir = normalized(dir);
-        draw_polygon( { to, to + size * rotate(dir, 20), to + size * rotate(dir, -20) } );
+        draw_polygon( { to, to + size * rotate(dir, 20), to + size * rotate(dir, -20) }, color );
     }
 
     void add_image(const svg_image& img) {
