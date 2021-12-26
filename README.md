@@ -46,7 +46,7 @@ This will ensure that `your-target` has the proper include directories set and i
 
 ## Compiling the examples
 
-You can read more about that [here](examples/../README.md).
+You can read more about that [here](example/README.md).
 
 ## Getting started
 
