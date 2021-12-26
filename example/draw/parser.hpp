@@ -1,25 +1,17 @@
 #pragma once
 
+#include <drag/graph.hpp>
+#include <drag/types.hpp>
+#include <drag/drawing/draw.hpp>
+
 #include <fstream>
 #include <string>
 #include <map>
 #include <sstream>
 #include <stdexcept>
 
-#include <drag/graph.hpp>
-#include <drag/types.hpp>
-
-#include "svg.hpp"
 
 namespace drag {
-
-float to_pt(float x) {
-	return x*72;
-}
-
-float pt_to_int(float x) {
-    return x/72;
-}
 
 bool contains(const std::map<std::string, drag::vertex_t>& nodes, const std::string& n) {
     return nodes.count(n) > 0;
@@ -47,7 +39,7 @@ float read_float(std::istream& in) {
     return x;
 }
 
-drag::graph parse(const std::string& file, drag::attributes& attr, drawing_options& opts) {
+drag::graph parse(const std::string& file, drawing_options& opts) {
     std::ifstream in(file);
 
     if (!in) {
@@ -72,22 +64,21 @@ drag::graph parse(const std::string& file, drag::attributes& attr, drawing_optio
         if (a == '=') {
             line_stream >> std::ws;
             if (first == "ranksep") {
-                attr.layer_dist = to_pt(read_float(line_stream));
+                g.layer_dist = read_float(line_stream);
             } else if (first == "nodesep") {
-                attr.node_dist = to_pt(read_float(line_stream));
+                g.node_dist = read_float(line_stream);
             } else if (first == "nodesize") {
-                attr.node_size = to_pt(read_float(line_stream));
+                g.node_size = read_float(line_stream);
             } else if (first == "fontsize") {
                 opts.font_size = read_float(line_stream);
             } else if (first == "loopangle") {
-                attr.loop_angle = read_float(line_stream);
+                g.loop_angle = read_float(line_stream);
             } else if (first == "loopsize") {
-                attr.loop_size = to_pt(read_float(line_stream));
+                g.loop_size = read_float(line_stream);
             }
         } else if (a == '-' && line_stream.get() == '>') {
             line_stream >> std::ws;
             std::string second = read_word(line_stream);
-            //std::cout << first << " -> " << second << "\n";
 
             if (!contains(nodes, second)) {
                 auto u = g.add_node();

@@ -1,7 +1,7 @@
-#include <drag/drag.hpp>
-#include "../example/svg.hpp"
 #include "../example/parser.hpp"
 #include "../example/helper.hpp"
+
+#include <drag/drag.hpp>
 
 #include <tuple>
 #include <fstream>

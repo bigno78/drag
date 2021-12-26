@@ -4,6 +4,9 @@
 #include <iostream>
 #include <ostream>
 #include <algorithm>
+#include <set>
+#include <tuple>
+#include <map>
 
 #include <drag/types.hpp>
 #include <drag/detail/utils.hpp>
@@ -16,6 +19,12 @@ namespace drag {
  */
 class graph {
 public:
+
+    float node_size = 25;         /**< radius of all nodes */
+    float node_dist = 20;         /**< minimum distance between borders of 2 nodes */
+    float layer_dist = 40;        /**< minimum distance between borders of nodes in 2 different layers */
+    float loop_angle = 55;        /**< angle determining the point on the node where a loop connects to it */
+    float loop_size = node_size;  /**< distance which the loop extends from the node*/
 
     /**
      * Add a new vertex to the graph.
@@ -109,37 +118,45 @@ private:
 /**
  * Builder class for creating graphs by hand.
  * 
- * Should be used with care since the node identifiers are chosen by the caller.
- * The chosen identifiers should be a consecutive sequence [0, n-1] where n is the number of vertices in the graph. 
- * Otherwise, the unused identifiers in the range [0, max_id] will be added into the graph as vertices
- * without any edges which is probably not what you want.
+ * The graph can be created by gradually adding edges which are
+ * specified by its endpoints - two non-negative numbers representing
+ * the vertices. Vertices don't need to be added, they are added 
+ * implicitely when creating edges.
  * 
- * For example if edges (0,2), (2,3), (0,3) are added, the resulting graph
- * will contain an aditional vertex with identifier 1.
+ * If the vertices are not in the range `0 ... n-1`, where `n`
+ * is the number of vertices, they will be mapped to this range.
  */
 struct graph_builder {
-    graph g;
+    std::set<vertex_t> nodes;
+    std::set<std::pair<vertex_t, vertex_t>> edges;
 
     /**
-     * Add a new edges with the given identifiers.
+     * Add a new edge.
      */
     graph_builder& add_edge(vertex_t u, vertex_t v) {
-        add_vertex(u);
-        add_vertex(v);
-        g.add_edge(u, v);
+        nodes.insert(u);
+        nodes.insert(v);
+        edges.emplace(u, v);
         return *this;
     }
 
     /**
      * Get the resulting graph.
      */
-    graph build() { return g; }
-    
-private:
-    void add_vertex(vertex_t u) {
-        while (u >= g.size()) {
-            g.add_node();
+    graph build() { 
+        graph g;
+
+        std::map<vertex_t, vertex_t> to_id;
+
+        for (auto u : nodes) {
+            to_id[u] = g.add_node();
         }
+
+        for (auto [ u, v ] : edges) {
+            g.add_edge( to_id[u], to_id[v] );
+        }
+
+        return g; 
     }
 };
 

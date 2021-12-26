@@ -6,6 +6,7 @@
 #include <vector>
 #include <algorithm>
 #include <map>
+#include <numeric> // iota
 
 #include <drag/detail/utils.hpp>
 #include <drag/graph.hpp>
@@ -47,13 +48,23 @@ class subgraph {
 public:
     subgraph(graph& g, std::vector< vertex_t > vertices) 
         : m_source(g)
-        , m_vertices(std::move(vertices)) {
-            if (!m_vertices.empty()) {
-                m_dummy_border = 1 + *std::max_element(m_vertices.begin(), m_vertices.end());
-            } else {
-                m_dummy_border = 0;
-            }
+        , m_vertices(std::move(vertices))
+    {
+        if (!m_vertices.empty()) {
+            m_dummy_border = 1 + *std::max_element(m_vertices.begin(), m_vertices.end());
+        } else {
+            m_dummy_border = 0;
         }
+    }
+
+    subgraph(graph& g) 
+        : m_source(g)
+        , m_vertices(g.size())
+    {
+        // set the vertices to numbers from `0` to `g.size() - 1` 
+        std::iota(m_vertices.begin(), m_vertices.end(), 0);
+        m_dummy_border = g.size();
+    }
 
     unsigned size() const { return m_vertices.size(); }
 
@@ -104,53 +115,6 @@ inline std::ostream& operator<<(std::ostream& out, const subgraph& g) {
     }
     return out;
 }
-
-
-// ----------------------------------------------------------------------------------------------
-// --------------------------------------  SPLITING  --------------------------------------------
-// ----------------------------------------------------------------------------------------------
-
-/**
- * Recursively assign u and all vertices reachable from u in the underlying undirected graph to the same component.
- */
-inline void split(const graph& g, std::vector<bool>& done, std::vector<vertex_t>& component, vertex_t u) {
-    done[u] = true;
-    component.push_back(u);
-    for (auto v : g.out_neighbours(u)) {
-        if (!done[v]) {
-            split(g, done, component, v);
-        }
-    }
-    for (auto v : g.in_neighbours(u)) {
-        if (!done[v]) {
-            split(g, done, component, v);
-        }
-    }
-}
-
-
-/**
- * Split the given graph into connected components represented by subgrapgs.
- */
-inline std::vector<subgraph> split(graph& g) {
-    std::vector< std::vector<vertex_t> > components;
-    std::vector< bool > done(g.size(), false);
-
-    for (auto u : g.vertices()) {
-        if (!done[u]) {
-            components.emplace_back();
-            split(g, done, components.back(), u);
-        }
-    }
-
-    std::vector<subgraph> subgraphs;
-    for (auto component : components) {
-        subgraphs.emplace_back(g, component);
-    }
-
-    return subgraphs;
-}
-
 
 // ----------------------------------------------------------------------------------------------
 // -----------------------------------  VERTEX MAP  ---------------------------------------------
@@ -203,8 +167,8 @@ struct vertex_map {
     T at(vertex_t u) const { return data[u]; }
     void set(vertex_t u, T val) { data[u] = val; }
 
-    T& operator[](vertex_t u) { return data[u]; }
-    const T& operator[](vertex_t u) const { return data[u]; }
+    decltype(auto) operator[](vertex_t u) { return data[u]; }
+    decltype(auto) operator[](vertex_t u) const { return data[u]; }
 
     void insert(vertex_t u, const T& val) {
         add_vertex(u);

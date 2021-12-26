@@ -483,6 +483,9 @@ public:
                 return orient::lower_left;      
         }
         assert(false);
+
+        // so there is no warning
+        return orient::upper_left;
     }
 
 };

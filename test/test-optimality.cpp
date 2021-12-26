@@ -1,55 +1,39 @@
-#include "../src/layering.hpp"
-#include "../src/parser.hpp"
-#include "../src/benchmarks/helper.hpp"
-#include "test-utils.hpp"
+#include "utils/test-utils.hpp"
+#include "utils/randomized.hpp"
+#include "utils/bruteforce.hpp"
+
+#include <drag/drag.hpp>
 
 #include <iostream>
 #include <fstream>
 #include <sstream>
 
+
 int main(int argc, char **argv) {
-    if (argc != 2) {
-        std::cerr << "Optimality test: missing input dir!\n";
-        return 1;
-    }
+    
+    // let's just use a fixed seed so the tests are replicable
+    size_t seed = 42;
 
-    std::string REFERECE_FILE = "opt.txt";
+    Tester tester(seed);
 
-    std::ifstream ref_in(REFERECE_FILE);
-    std::map<std::string, int> expected;
-    std::string line;
-    int i = 1;
-    while(std::getline(ref_in, line)) {
-        std::istringstream ss(line);
-        std::string f;
-        int val;
-        ss >> f >> val;
-        if (!std::cin) {
-            std::cerr << "Optimality test: wrong reference file format on line" << i << "!\n";
-            return 1;
-        }
-        expected[f] = val;
-        ++i;
-    }
+    auto test_function = [] (drag::graph& g) {
+        drag::detail::subgraph sub = make_subgraph(g);
+        drag::detail::network_simplex_layering layering;
+        auto hierarchy = layering.run(sub);
 
-    for (const auto& f : dir_contents(argv[1], ".gv")) {
-        std::cout << f << "\n";
-        graph g;
-        parse(argv[1] + f, g);
-        detail::subgraph sub = make_subgraph(g);
-        detail::network_simplex_layering lay;
-        auto h = lay.run(sub);
+        auto res = get_total_edge_length(hierarchy);
 
-        int given = get_total_edge_length(h);
-        std::cout << given << "\n";
-        if (given != expected[f]) {
-            std::cout << "TEST FAILED on: " << f << "\n";
-            std::cout << "expected: " << expected[f] << "\n";
-            std::cout << "given:    " << given << "\n";
-            return 1;
-        }
-    }
+        auto expected = bruteforce_layering_total_length(g);
 
-    std::cout << "TEST PASSED\n";
-    return 0;
+        return res == expected;
+    };
+
+    test_config small_config;
+    small_config.n = 15;
+    small_config.m = 22;
+    small_config.count = 20;
+
+    tester.register_test("low_density", small_config, test_function);
+
+    return tester.run_tests();
 }

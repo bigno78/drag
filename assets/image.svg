@@ -1,0 +1,17 @@
+<svg xmlns='http://www.w3.org/2000/svg'
+	width='140pt' height='160pt'
+	viewBox='0 0 140 160'>
+<polygon fill='white' stroke='transparent' points='0,0 0,160 140,160 140,0'/>
+<g transform='translate(10, 10)'>
+<circle cx="60" cy="25" r="25" stroke="blue" stroke-width="1" fill="white" />
+<text x="60" y="25" fill="blue" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >a</text>
+<circle cx="25" cy="115" r="25" stroke="green" stroke-width="1" fill="white" />
+<text x="25" y="115" fill="green" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >b</text>
+<circle cx="95" cy="115" r="25" stroke="black" stroke-width="1" fill="white" />
+<text x="95" y="115" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >c</text>
+<polyline points="50.9388 48.3001 34.0612 91.6999" stroke="red" fill="none" />
+<polygon points="34.0612,91.6999 34.2794,81.7023 40.6547,84.1815 " stroke="red" fill="red" />
+<polyline points="69.0612 48.3001 85.9388 91.6999" stroke="black" fill="none" />
+<polygon points="85.9388,91.6999 79.3453,84.1815 85.7206,81.7023 " stroke="black" fill="black" />
+</g>
+</svg>

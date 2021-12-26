@@ -1,0 +1,49 @@
+<svg xmlns='http://www.w3.org/2000/svg'
+	width='258.5pt' height='326pt'
+	viewBox='0 0 258.5 326'>
+<polygon fill='white' stroke='transparent' points='0,0 0,326 258.5,326 258.5,0'/>
+<g transform='translate(10, 10)'>
+<circle cx="119.25" cy="18" r="18" stroke="black" stroke-width="1" fill="white" />
+<text x="119.25" y="18" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >0</text>
+<circle cx="51.75" cy="85.5" r="18" stroke="black" stroke-width="1" fill="white" />
+<text x="51.75" y="85.5" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >1</text>
+<circle cx="186.75" cy="85.5" r="18" stroke="black" stroke-width="1" fill="white" />
+<text x="186.75" y="85.5" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >2</text>
+<circle cx="51.75" cy="153" r="18" stroke="black" stroke-width="1" fill="white" />
+<text x="51.75" y="153" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >3</text>
+<circle cx="18" cy="220.5" r="18" stroke="black" stroke-width="1" fill="white" />
+<text x="18" y="220.5" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >4</text>
+<circle cx="85.5" cy="220.5" r="18" stroke="black" stroke-width="1" fill="white" />
+<text x="85.5" y="220.5" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >5</text>
+<circle cx="153" cy="153" r="18" stroke="black" stroke-width="1" fill="white" />
+<text x="153" y="153" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >6</text>
+<circle cx="220.5" cy="153" r="18" stroke="black" stroke-width="1" fill="white" />
+<text x="220.5" y="153" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >7</text>
+<circle cx="153" cy="220.5" r="18" stroke="black" stroke-width="1" fill="white" />
+<text x="153" y="220.5" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >8</text>
+<circle cx="119.25" cy="288" r="18" stroke="black" stroke-width="1" fill="white" />
+<text x="119.25" y="288" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >9</text>
+<circle cx="186.75" cy="288" r="18" stroke="black" stroke-width="1" fill="white" />
+<text x="186.75" y="288" fill="black" dominant-baseline="middle" text-anchor="middle" font-size="12" font-family="Times,serif" >10</text>
+<polyline points="106.522 30.7279 64.4779 72.7721" stroke="black" fill="none" />
+<polygon points="64.4779,72.7721 67.5208,66.2467 71.0033,69.7292 " stroke="black" />
+<polyline points="131.978 30.7279 174.022 72.7721" stroke="black" fill="none" />
+<polygon points="174.022,72.7721 167.497,69.7292 170.979,66.2467 " stroke="black" />
+<polyline points="51.75 103.5 51.75 135" stroke="black" fill="none" />
+<polygon points="51.75,135 49.2875,128.234 54.2125,128.234 " stroke="black" />
+<polyline points="43.7002 169.1 26.0498 204.4" stroke="black" fill="none" />
+<polygon points="26.0498,204.4 26.873,197.248 31.2782,199.45 " stroke="black" />
+<polyline points="59.7998 169.1 77.4502 204.4" stroke="black" fill="none" />
+<polygon points="77.4502,204.4 72.2218,199.45 76.627,197.248 " stroke="black" />
+<polyline points="178.7 101.6 161.05 136.9" stroke="black" fill="none" />
+<polygon points="161.05,136.9 161.873,129.748 166.278,131.95 " stroke="black" />
+<polyline points="194.8 101.6 212.45 136.9" stroke="black" fill="none" />
+<polygon points="212.45,136.9 207.222,131.95 211.627,129.748 " stroke="black" />
+<polyline points="153 171 153 202.5" stroke="black" fill="none" />
+<polygon points="153,202.5 150.537,195.734 155.463,195.734 " stroke="black" />
+<polyline points="144.95 236.6 127.3 271.9" stroke="black" fill="none" />
+<polygon points="127.3,271.9 128.123,264.747 132.528,266.95 " stroke="black" />
+<polyline points="161.05 236.6 178.7 271.9" stroke="black" fill="none" />
+<polygon points="178.7,271.9 173.472,266.95 177.877,264.747 " stroke="black" />
+</g>
+</svg>
